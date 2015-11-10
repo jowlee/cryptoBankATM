@@ -18,6 +18,10 @@ void deposit(const String* user, unsigned long amount);
 void balance(const String* user);
 
 void *ioThread(void *threadid);
+
+void error(const char *msg);
+int recvMessage(int newsockfd, char  buffer[256], int length);
+int sendMessage(int newsockfd, std::string message);
 void *socketThread(void *threadid);
 
 int main(int argc, char *argv[]) {
