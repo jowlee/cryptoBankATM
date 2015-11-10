@@ -4,7 +4,7 @@ const int PACKET_DATA_LENGTH = 32;    //bytes
 const int PACKET_CHECKSUM_LENGTH = 32;
 
 // send command
-ssize_t send(TCPSocket *sock, const void *buf, size_t len, int flags){
+ssize_t cwrite(int fd, const void *buf, size_t count) {
 	//long indexOfPad = random integer from 0 to size of OTP in bytes
 	//byte* nonce = longToByteArray(&indexOfPad, PACKET_DATA_LENGTH + PACKET_CHECKSUM_LENGTH);
 	//send nonce to reciever
@@ -30,10 +30,8 @@ ssize_t send(TCPSocket *sock, const void *buf, size_t len, int flags){
 	//}
 }
 
-ssize_t sendto(int sockfd, const void *buf, size_t len, int flags, const struct sockaddr *dest_addr, socklen_t addrlen);
-
 // recv command
-ssize_t recv(TCPSocket *sock, void *buf, size_t len, int flags) {
+ssize_t cread(int fd, void *buf, size_t count) {
 	//1
 	//wait for nonce from sender
 	//long indexOfPad;
@@ -67,7 +65,6 @@ ssize_t recv(TCPSocket *sock, void *buf, size_t len, int flags) {
 	//}
 	//return amount_recv;	
 }
-ssize_t recvfrom(int sockfd, void *buf, size_t len, int flags, struct sockaddr *src_addr, socklen_t *addrlen);
 
 byte* OTP(long* index, long amount) {
 	//byte pad[amount];  allocate amount bytes to return
