@@ -1,6 +1,7 @@
 Socket:
 http://www.bogotobogo.com/cplusplus/sockets_server_client.php
 http://cs.ecs.baylor.edu/~donahoo/practical/CSockets/practical/
+http://www.linuxhowtos.org/C_C++/socket.htm
 
 Threads:
 http://www.tutorialspoint.com/cplusplus/cpp_multithreading.htm
