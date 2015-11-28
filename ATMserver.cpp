@@ -13,10 +13,14 @@
 #include <pthread.h>			// For multithreading
 #include <stdint.h>
 
-typedef struct {
-  int   value;
-  char  string[128];
-} thread_parm_t;
+struct thread_info { 	   		/* Used as argument to thread_start() */
+	pthread_t 	thread_id;     /* ID returned by pthread_create() */
+	int 			arg;			/* Socket. I think */
+	// user_type		*users; 		/* Pointer to global users object */
+	//session_type	*sessions;		// pointer to global sessions object
+	// CryptoPP::SecByteBlock session_key;
+	// string 			username;
+};
 
 
 //HashMap of usernames to a tuple of user info or user object containing {username, pin, balance}
@@ -68,11 +72,14 @@ int main(int argc, char *argv[]) {
             error("ERROR on accept");
         pthread_t thread;
         int        *parm=NULL;
+        thread_info args;
+        args.arg = newsockfd;
+
         // pid = fork();
         // pthread_create(NULL, NULL, socketThread, (void *)newsockfd);
         // pthread_create(NULL, NULL, socketThread, &newsockfd);
         // pthread_create(NULL, NULL, socketThread, (void *) (intptr_t) newsockfd);
-        pthread_create(&thread, NULL, socketThread, NULL);
+        pthread_create(&thread, NULL, socketThread, &args);
         // if (pid < 0)
         //     error("ERROR on fork");
         // if (pid == 0)  {
