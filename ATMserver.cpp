@@ -12,10 +12,14 @@
 #include <cstring>
 #include <pthread.h>			// For multithreading
 #include <stdint.h>
+#include <typeinfo>
+
+
+
 
 struct thread_info { 	   		/* Used as argument to thread_start() */
 	pthread_t 	thread_id;     /* ID returned by pthread_create() */
-	int 			arg;			/* Socket. I think */
+	int 			sock;			/* Socket. I think */
 	// user_type		*users; 		/* Pointer to global users object */
 	//session_type	*sessions;		// pointer to global sessions object
 	// CryptoPP::SecByteBlock session_key;
@@ -28,10 +32,10 @@ struct thread_info { 	   		/* Used as argument to thread_start() */
 void deposit(const std::string* user, unsigned long amount);
 void balance(const std::string* user);
 
-void *ioThread(void *threadid);
-
 void error(const char *msg);
-void *socketThread(int* sock);
+
+void* consoleThread(void *threadid);
+void* socketThread(void* arg);
 
 int main(int argc, char *argv[]) {
   	if (argc != 2) {                     // Test for correct number of arguments
@@ -63,31 +67,23 @@ int main(int argc, char *argv[]) {
     }
     listen(sockfd,5);
     clilen = sizeof(cli_addr);
-    // pthread_t* threadNum =;
-    while (1) {
 
-        newsockfd = accept(sockfd,
-              (struct sockaddr *) &cli_addr, &clilen);
-        if (newsockfd < 0)
-            error("ERROR on accept");
+    pthread_t thread;
+    thread_info args;
+    pthread_create(&thread, NULL, consoleThread, &args);
+
+    while (1) {
+        newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
+        if (newsockfd < 0) {
+          error("ERROR on accept");
+          continue;
+        }
         pthread_t thread;
-        int        *parm=NULL;
         thread_info args;
-        args.arg = newsockfd;
+        args.sock = newsockfd;
 
         // pid = fork();
-        // pthread_create(NULL, NULL, socketThread, (void *)newsockfd);
-        // pthread_create(NULL, NULL, socketThread, &newsockfd);
-        // pthread_create(NULL, NULL, socketThread, (void *) (intptr_t) newsockfd);
         pthread_create(&thread, NULL, socketThread, &args);
-        // if (pid < 0)
-        //     error("ERROR on fork");
-        // if (pid == 0)  {
-        //     close(sockfd);
-        //     dostuff(newsockfd);
-        //     exit(0);
-        // }
-        // else close(newsockfd);
         close(newsockfd);
         // int threadNum* ++;
     } /* end of while */
@@ -99,57 +95,49 @@ int main(int argc, char *argv[]) {
 
 //
 void deposit(const std::string* user, unsigned long amount) {
-
+  std::cout << "dtest" << std::endl;
 }
 
 void balance(const std::string* user) {
-
+  std::cout << "btest" << std::endl;
 }
 void error(const char *msg)
 {
     std::cerr << msg <<std::endl;
     exit(1);
 }
+// Read input until we read a space, then for each character add it to the command string
+std::string advanceCommand(const std::string& line, int &index) {
+  std::string command = "";
+  for(; line[index] != ' ' && index <= line.length(); index++) {
+    command += line[index];
+  }
+  return command;
+}
+// Skip any number of spaces
+void advanceSpaces(const std::string &line, int &index) {
+  for(; line[index] == ' ' && index <= line.length(); index++);
+}
 
-
-void *ioThread(void *threadid) {
+void *consoleThread(void *threadid) {
 	// Read in commands from cin
 	for(std::string line; getline(std::cin, line);) {
+
 		int index = 0;
-		std::string command = "";
+		std::string command = advanceCommand(line, index);
+    advanceSpaces(line, index);
+		std::string username = advanceCommand(line, index);
 
-		// Read input until we read a space, then for each character add it to the command string
-		for(; line[index] != ' ' || index >= line.length(); index++) {
-			command += line[index];
-		}
-
-		// Skip any number of spaces
-		for(; line[index] == ' ' || index >= line.length(); index++);
-
-		std::string username = "";
-
-		// Read the next chars and put into username
-		for(; line[index] != ' '  || index >= line.length(); index++) {
-			username += line[index];
-		}
 		//deposit ​[username] [amount] ­ Increase <username>’s ​balance by <amount>
-		if(command.compare(0,8,"deposit")) {
-			std::string amount = "";
-
-			// Skip any number of spaces
-			for(; line[index] == ' ' || index >= line.length(); index++);
-
-			// Read until the next space and put it in amount
-			for(; line[index] != ' ' || index >= line.length(); index++) {
-				amount += line[index];
-			}
+		if(command.compare("deposit") == 1) {
+      advanceSpaces(line, index);
+			std::string amount = advanceCommand(line, index);
 
 			// Execute deposit command
 			deposit(&username, atol(amount.c_str()));
 		}
 		//balance​ [username] ­ Print the balance of <username>
-		else if(command.compare(0,8,"balance")) {
-
+		else if(command.compare("balance") == 1) {
 			// Execute balance command
 			balance(&username);
 		}
@@ -157,10 +145,11 @@ void *ioThread(void *threadid) {
 	pthread_exit(NULL);		// Ends the thread
 }
 
-void* socketThread(void * sockid) {
-  // int sock = (intptr_t) sockid;
-  // int sock = (int)sockid;
-  int sock = 5;
+void* socketThread(void* args) {
+  struct thread_info *tinfo;
+  tinfo = (thread_info *) args;
+  int sock = tinfo->sock;
+
   int n;
   char buffer[256];
 
