@@ -6,6 +6,10 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h>
+#include "crypto.h"
+
+#define write cwrite
+#define read cread
 
 void error(const char *msg)
 {

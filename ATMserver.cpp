@@ -13,7 +13,10 @@
 #include <pthread.h>			// For multithreading
 #include <stdint.h>
 #include <typeinfo>
+#include "crypto.h"
 
+#define write cwrite
+#define read cread
 
 
 
