@@ -230,5 +230,5 @@ char* concat(const char* left, const char* right, int sizel, int sizer) {
 }
 
 char* sha_256(char* buf) {
-	return sha256(buf);
+	return &sha256(buf)[0];
 }
