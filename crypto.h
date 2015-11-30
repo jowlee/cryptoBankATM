@@ -1,5 +1,4 @@
 #include <unistd.h>
-#include "crypto.cpp"
 
 // send command
 ssize_t cwrite(int fd, const void *buf, size_t count);

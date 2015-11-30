@@ -1,4 +1,3 @@
-#include "crypto.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <cstdlib>
@@ -12,6 +11,7 @@
 #include <string>
 #include <cstring>
 #include "sha256.h"
+#include "crypto.h"
 
 const int PACKET_DATA_LENGTH = 32;    //bytes
 const int PACKET_CHECKSUM_LENGTH = 32;
@@ -25,6 +25,7 @@ unsigned long long charArrayToLong(const char* data, int size);
 bool charArrayEquals(const char* data1, const char* data2, int size);
 char* concat(const char* left, const char* right, int sizel, int sizer);
 char* sha_256(char* buf);
+
 
 // send command
 ssize_t cwrite(int fd, const void *buf, size_t len) {
