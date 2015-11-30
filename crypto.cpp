@@ -169,7 +169,7 @@ char* OTP(unsigned long long* index, const unsigned long long amount) {
 	pad.open("otp.key");
 	pad.seekg(*index);
 	char result[amount];
-	pad.read(result, amount)
+	pad.read(result, amount);
 	pad.close();
 	*index += amount;
 	return result;
