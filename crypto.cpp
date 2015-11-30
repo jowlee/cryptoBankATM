@@ -41,7 +41,7 @@ ssize_t cwrite(int fd, const void *buf, size_t len) {
 	}
 	//1
 	//char* myChecksum = xor(OTP(&indexOfPad, PACKET_DATA_LENGTH + PACKET_CHECKSUM_LENGTH), OTP(&indexOfPad, PACKET_DATA_LENGTH + PACKET_CHECKSUM_LENGTH));
-	char* myChecksum = xorCharArray(OTP(indexOfPad,PACKET_LENGTH), OTP(indexOfPad, PACKET_LENGTH));
+	char* myChecksum = xorCharArray(OTP(indexOfPad,PACKET_LENGTH), OTP(indexOfPad, PACKET_LENGTH), PACKET_LENGTH);
 	//2
 	//byte* response = response from receiver
 	char buffer[PACKET_LENGTH];
