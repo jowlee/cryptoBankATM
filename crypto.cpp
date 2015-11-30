@@ -110,7 +110,7 @@ ssize_t cread(int fd, void *buf, size_t count) {
 	}
 	//long indexOfPad;
 	//indexOfPad = charArrayToLong(message recieved from sender);
-	unsigned long long indexOfPad = charArrayToLong(buffer);
+	unsigned long long indexOfPad = charArrayToLong(buffer, PACKET_LENGTH);
 	//byte* message = OTP(&indexOfPad, PACKET_DATA_LENGTH + PACKET_CHECKSUM_LENGTH);
 	char* message = OTP(&indexOfPad, PACKET_LENGTH);
 	//byte* pad = OTP(&indexOfPad, PACKET_DATA_LENGTH + PACKET_CHECKSUM_LENGTH);
