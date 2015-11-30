@@ -201,7 +201,7 @@ unsigned long long unsignedLongLongRand() {
 }
 
 char* longToCharArray(unsigned long long num, int size) {
-	return reinterpret_cast<char*>(mylong);
+	return reinterpret_cast<char*>(num);
 }
 
 unsigned long long charArrayToLong(const char* data, int size){
