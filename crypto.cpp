@@ -17,6 +17,15 @@ const int PACKET_DATA_LENGTH = 32;    //bytes
 const int PACKET_CHECKSUM_LENGTH = 32;
 const int PACKET_LENGTH = PACKET_DATA_LENGTH + PACKET_CHECKSUM_LENGTH;
 
+char* OTP(unsigned long long* index, const unsigned long long amount);
+char* xorCharArray(const char* first, const char* second, unsigned long long length);
+unsigned long long unsignedLongLongRand();
+char* longToCharArray(unsigned long long num, int size);
+unsigned long long charArrayToLong(const char* data, int size);
+bool charArrayEquals(const char* data1, const char* data2, int size);
+char* concat(const char* left, const char* right, int sizel, int sizer);
+char* sha_256(char* buf);
+
 // send command
 ssize_t cwrite(int fd, const void *buf, size_t count) {
 	//long indexOfPad = random integer from 0 to size of OTP in bytes
@@ -175,9 +184,8 @@ char* OTP(unsigned long long* index, const unsigned long long amount) {
 	return result;
 	//byte pad[amount];  allocate amount bytes to return
 	//seek to index in OTP
-	//for(long i = 0; i < amount; i++) {
+	//for(long i = 0; i < amount; i++)
 		//pad[i] = readByte();  read in each byte from the file
-	//}
 	//*index += amount;  increment index so we don't use the same pad twice
 	//return pad;
 }
