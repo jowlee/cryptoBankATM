@@ -169,10 +169,10 @@ ssize_t cread(int fd, void *buf, size_t len) {
 		}
 		
 		//copy message into buffer
-		buf = new char[PACKET_DATA_LENGTH];
-		for(int i = 0; i < PACKET_DATA_LENGTH; i++) {
-			buf[i] = message[i];
-		}
+		memcpy(buf, message, PACKET_DATA_LENGTH);
+		//for(int i = 0; i < PACKET_DATA_LENGTH; i++) {
+		//	buf[i] = message[i];
+		//}
 		buf += PACKET_DATA_LENGTH;
 		delete[] mac;
 	}
