@@ -8,7 +8,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <iostream>
-#include <ifstream>
+#include <fstream>
 #include <string>
 #include <cstring>
 #include "sha256.h"
