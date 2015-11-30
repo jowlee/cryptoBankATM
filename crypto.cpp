@@ -29,7 +29,8 @@ char* sha_256(char* buf);
 // send command
 ssize_t cwrite(int fd, const void *buf, size_t len) {
 	//long indexOfPad = random integer from 0 to size of OTP in bytes
-	unsigned long long* indexOfPad = &unsignedLongLongRand();
+	unsigned long long* indexOfPad = new unsigned long long;
+	*indexOfPad = unsignedLongLongRand();
 	//char* nonce = longToCharArray(&indexOfPad, PACKET_LENGTH);
 	char* nonce = longToCharArray(*indexOfPad, PACKET_LENGTH);
 	//send nonce to reciever
