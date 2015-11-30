@@ -27,7 +27,7 @@ char* concat(const char* left, const char* right, int sizel, int sizer);
 char* sha_256(char* buf);
 
 // send command
-ssize_t cwrite(int fd, const void *buf, size_t count) {
+ssize_t cwrite(int fd, const void *buf, size_t len) {
 	//long indexOfPad = random integer from 0 to size of OTP in bytes
 	unsigned long long* indexOfPad = unsignedLongLongRand();
 	//char* nonce = longToCharArray(&indexOfPad, PACKET_LENGTH);
@@ -96,7 +96,7 @@ ssize_t cwrite(int fd, const void *buf, size_t count) {
 }
 
 // recv command
-ssize_t cread(int fd, void *buf, size_t count) {
+ssize_t cread(int fd, void *buf, size_t len) {
 	//1
 	//wait for nonce from sender
 	char buffer[PACKET_LENGTH];
