@@ -11,7 +11,7 @@
 #include <fstream>
 #include <string>
 #include <cstring>
-#include "cryptopp/sha.h"
+#include "sha256.h"
 
 const int PACKET_DATA_LENGTH = 32;    //bytes
 const int PACKET_CHECKSUM_LENGTH = 32;
