@@ -143,66 +143,37 @@ void* client_thread(void* arg) {
     flags [in] A set of flags that influences the behavior of this function.
     */
 
+	  int n;
+	  char buffer[256];
 
-
-		if(sizeof(int) != recv(csock, &length, sizeof(int), 0))
-			break;
-		if(length >= 1024) {
-			printf("packet too long\n");
-			break;
-		}
-		if(length != recv(csock, packet, length, 0)) {
-			printf("[proxy] fail to read packet\n");
-			break;
-		}
+	  bzero(buffer,256);
+	  n = read(csock,buffer,255);
+	  if (n < 0) error("ERROR reading from socket");
 
     /*
       Other Team may mess with code here.
       Good Luck!
     */
 
-		//forward packet to bank
-		if(sizeof(int) != send(bankSocket, &length, sizeof(int), 0)) {
-			printf("[proxy] fail to send packet length\n");
-			break;
-		}
-		if(length != send(bankSocket, (void*)packet, length, 0)) {
-			printf("[proxy] fail to send packet\n");
-			break;
-		}
 
-		//get response packet from bank
-		if(sizeof(int) != recv(bankSocket, &length, sizeof(int), 0)) {
-			printf("[proxy] fail to read packet length\n");
-			break;
-		}
-		if(length >= 1024) {
-			printf("packet too long\n");
-			break;
-		}
-		if(length != recv(bankSocket, packet, length, 0)) {
-			printf("[proxy] fail to read packet\n");
-			break;
-		}
+		n = write(bankSocket,buffer,255);
+		if (n < 0) error("ERROR writing to socket");
 
-    /*
+		bzero(buffer,256);
+	  n = read(bankSocket,buffer,255);
+	  if (n < 0) error("ERROR reading from socket");
+
+		/*
       Other Team may mess with code here.
       Good Luck!
     */
 
-		//forward packet to ATM
-		if(sizeof(int) != send(csock, &length, sizeof(int), 0)) {
-			printf("[proxy] fail to send packet length\n");
-			break;
-		}
-		if(length != send(csock, (void*)packet, length, 0)) {
-			printf("[proxy] fail to send packet\n");
-			break;
-		}
+		n = write(csock,buffer,255);
+		if (n < 0) error("ERROR writing to socket");
 
 	}
 
-	printf("[proxy] client ID #%d disconnected\n", csock);
+	printf("Disconected from client %d \n", csock);
 
 	close(bankSocket);
 	close(csock);
