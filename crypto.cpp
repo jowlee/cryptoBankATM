@@ -76,7 +76,7 @@ ssize_t cwrite(int fd, const void *buf, size_t len) {
 	//for(int bufferIndex = 0; bufferIndex < len; bufferIndex += PACKET_DATA_LENGTH) {
 	for(int bufferIndex = 0; bufferIndex < len; bufferIndex += PACKET_DATA_LENGTH) {
 		//char* toSend = buf[bufferIndex];
-		char* toSend = buf[bufferIndex];
+		char* toSend = ((char*)buf)[bufferIndex];
 		//char* key = OTP(&indexOfPad, PACKET_DATA_LENGTH + PACKET_CHECKSUM_LENGTH);
 		char* key = OTP(indexOfPad, PACKET_LENGTH);
 		//char* mac = sha-256(concat(toSend, key));
@@ -86,7 +86,7 @@ ssize_t cwrite(int fd, const void *buf, size_t len) {
 		//char* pad = OTP(&indexOfPad, PACKET_DATA_LENGTH + PACKET_CHECKSUM_LENGTH);
 		char* pad = OTP(indexOfPad, PACKET_LENGTH);
 		//send xor(message, pad) to reciever 
-		n = write(fd, xorCharArray(message, pad), PACKET_LENGTH);
+		n = write(fd, xorCharArray(message, pad, PACKET_LENGTH), PACKET_LENGTH);
 		if (n < 0) {
 			delete[] key;
 			return -1;
