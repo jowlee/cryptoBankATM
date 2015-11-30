@@ -114,9 +114,9 @@ ssize_t cread(int fd, void *buf, size_t count) {
 	//byte* message = OTP(&indexOfPad, PACKET_DATA_LENGTH + PACKET_CHECKSUM_LENGTH);
 	char* message = OTP(&indexOfPad, PACKET_LENGTH);
 	//byte* pad = OTP(&indexOfPad, PACKET_DATA_LENGTH + PACKET_CHECKSUM_LENGTH);
-	char pad = OTP(&indexOfPad, PACKET_LENGTH);
+	char* pad = OTP(&indexOfPad, PACKET_LENGTH);
 	//byte* reply = xor(message, pad);
-	char* reply = xorCharArray(message, pad);
+	char* reply = xorCharArray(message, pad, PACKET_LENGTH);
 	//send reply to sender
 	n = write(fd, reply, PACKET_LENGTH);
 	if (n < 0) {
