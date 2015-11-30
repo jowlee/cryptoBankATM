@@ -77,13 +77,13 @@ ssize_t cwrite(int fd, const void *buf, size_t count) {
 		//char* toSend = buf[bufferIndex];
 		char* toSend = buf[bufferIndex];
 		//char* key = OTP(&indexOfPad, PACKET_DATA_LENGTH + PACKET_CHECKSUM_LENGTH);
-		char* key = OTP(&indexOfPad, PACKET_DATA_LENGTH + PACKET_CHECKSUM_LENGTH);
+		char* key = OTP(indexOfPad, PACKET_LENGTH);
 		//char* mac = sha-256(concat(toSend, key));
-		char* mac = sha256(concat(toSend, key));
+		char* mac = sha_256(concat(toSend, key, PACKET_DATA_LENGTH, PACKET_CHECKSUM_LENGTH));
 		//char* message = concat(toSend, mac);
-		char* message = concat(toSend, mac);
+		char* message = concat(toSend, mac, bufferIndex, PACKET_DATA_LENGTH, PACKET_CHECKSUM_LENGTH);
 		//char* pad = OTP(&indexOfPad, PACKET_DATA_LENGTH + PACKET_CHECKSUM_LENGTH);
-		char* pad = OTP(&indexOfPad, PACKET_DATA_LENGTH + PACKET_CHECKSUM_LENGTH);
+		char* pad = OTP(indexOfPad, PACKET_LENGTH);
 		//send xor(message, pad) to reciever 
 		n = write(fd, xorCharArray(message, pad), PACKET_LENGTH);
 		if (n < 0) {
@@ -158,7 +158,7 @@ ssize_t cread(int fd, void *buf, size_t count) {
 		//byte* mac = sha-256(concat(messsage, key));     recompute mac
 		//std::string msgStr(message);
 		//std::string keyStr(key);
-		char* mac = sha_256(concat(msgStr, keyStr));
+		char* mac = sha_256(concat(message, key, PACKET_DATA_LENGTH, PACKET_CHECKSUM_LENGTH));
 		if(!charArrayEquals(checksum, mac, PACKET_LENGTH)) {
 			//checksum != mac
 			return -1;
