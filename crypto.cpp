@@ -165,7 +165,7 @@ ssize_t cread(int fd, void *buf, size_t count) {
 }
 
 char* OTP(unsigned long long* index, const unsigned long long amount) {
-	ifstream pad;
+	std::ifstream pad;
 	pad.open("otp.key");
 	pad.seekg(*index);
 	char result[amount];
