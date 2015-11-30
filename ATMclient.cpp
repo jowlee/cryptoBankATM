@@ -10,14 +10,11 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h>
-<<<<<<< HEAD
 #include "crypto.h"
 
 #define write cwrite
 #define read cread
-=======
 #include "clientCommands.cpp"
->>>>>>> b45434316fa05089ad00366334f1b6c559adefe8
 
 void error(const char *msg){
     perror(msg);
