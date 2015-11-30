@@ -2,7 +2,7 @@
 INC=-L/usr/include/
 
 all:
-	# g++ -std=c++0x -Wall $(INC) ATMclient.cpp -lcryptopp -lpthread -o ATMclient -g
+	g++  $(INC) ATMclient.cpp -lcryptopp -lpthread -o ATMclient -g
 	# g++ -Wall $(INC) ATMproxy.cpp -o ATMproxy -lpthread -g
 	#g++ $(INC) crypto.cpp -lcryptopp -lpthread -c
 	g++ $(INC) ATMserver.cpp crypto.cpp sha256.cpp -lcryptopp -lpthread -o ATMserver

@@ -2,60 +2,138 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <string>
+#include <iostream>
+#include <cstring>
+#include <signal.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h>
+<<<<<<< HEAD
 #include "crypto.h"
 
 #define write cwrite
 #define read cread
+=======
+#include "clientCommands.cpp"
+>>>>>>> b45434316fa05089ad00366334f1b6c559adefe8
 
-void error(const char *msg)
-{
+void error(const char *msg){
     perror(msg);
     exit(0);
 }
 
-int main(int argc, char *argv[])
-{
-    int sockfd, portno, n;
-    struct sockaddr_in serv_addr;
-    struct hostent *server;
-
-    char buffer[256];
-    if (argc < 3) {
-       fprintf(stderr,"usage %s hostname port\n", argv[0]);
-       exit(0);
-    }
-    portno = atoi(argv[2]);
-    sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (sockfd < 0)
-        error("ERROR opening socket");
-    server = gethostbyname(argv[1]);
-    if (server == NULL) {
-        fprintf(stderr,"ERROR, no such host\n");
-        exit(0);
-    }
-    bzero((char *) &serv_addr, sizeof(serv_addr));
-    serv_addr.sin_family = AF_INET;
-    bcopy((char *)server->h_addr,
-         (char *)&serv_addr.sin_addr.s_addr,
-         server->h_length);
-    serv_addr.sin_port = htons(portno);
-    if (connect(sockfd,(struct sockaddr *) &serv_addr,sizeof(serv_addr)) < 0)
-        error("ERROR connecting");
-    printf("Please enter the message: ");
-    bzero(buffer,256);
-    fgets(buffer,255,stdin);
-    n = write(sockfd,buffer,strlen(buffer));
-    if (n < 0)
-         error("ERROR writing to socket");
-    bzero(buffer,256);
-    n = read(sockfd,buffer,255);
-    if (n < 0)
-         error("ERROR reading from socket");
-    printf("%s\n",buffer);
-    close(sockfd);
-    return 0;
+void closeSocket(int atmSocket) {
+	printf("Closing \n");
+	fflush(stdout);
+	close(atmSocket);
+	exit(1);
 }
+
+int main(int argc, char *argv[]){
+
+  // Check for arguments (port number is provided)
+  if(argc != 2){
+		printf("Run ./ATMClient <proxy-port-number>\n");
+		return -1;
+	}
+
+  //socket setup
+	unsigned int proxyPortNo = atoi(argv[1]);
+	int atmSocket = socket(AF_INET, SOCK_STREAM, 0);
+	if(atmSocket == -1){
+		printf("Did not connect to socket\n");
+		return -1;
+	}
+
+	//Close sock on Ctrl-C
+	signal(SIGINT, closeSocket);
+
+  sockaddr_in addr;
+  addr.sin_family = AF_INET;
+  addr.sin_port = htons(proxyPortNo);
+  addr.sin_addr.s_addr = INADDR_ANY;
+
+  if(0 != connect(atmSocket, reinterpret_cast<sockaddr*>(&addr), sizeof(addr))){
+    printf("Did not connect to socket\n");
+    return -1;
+  }
+
+  //input loop
+  bool loggedin = false;
+
+  while(1){
+    printf("atm ~ : ");
+
+    char buf[80];
+    fgets(buf, 79, stdin);
+		buf[strlen(buf)-1] = '\0';	//trim off trailing newline
+    int index = 0;
+    std::string input(buf);
+    std::string command = advanceCommand(input, index);
+    std::cout << command << std::endl;
+
+
+    // Wait for user to input command
+    // int n = write(atmSocket, "123123", 16);
+    //
+    // char buffer[256];
+    // bzero(buffer,256);
+    // printf("Here is the message: %s\n",buffer);
+
+    // n = read(sock,buffer,255);
+    // if (n < 0) error("ERROR reading from socket");
+
+    if(loggedin){
+      // Login in
+      if(command.compare("balance") == 0){
+        advanceSpaces(input, index);
+        std::cout << "Obtaining Balance..." << std::endl;
+
+      }
+
+      else if(command.compare("withdraw") == 0){
+        advanceSpaces(input, index);
+        std::string amountString = advanceCommand(input, index);
+        float amount = atof(amountString.c_str());
+        std::cout << amount << std::endl;
+      }
+
+      else if(command.compare("transfer") == 0){
+        advanceSpaces(input, index);
+        std::string amountString = advanceCommand(input, index);
+        float amount = atof(amountString.c_str());
+        advanceSpaces(input, index);
+        std::string username = advanceCommand(input, index);
+        std::cout << username << std::endl;
+      }
+
+      else if(command.compare("logout") == 0){
+        advanceSpaces(input, index);
+        std::cout << "Logging Out Now..." << std::endl;
+        std::cout << "GoodBye" << std::endl;
+        exit(0);
+      }
+      else{
+        std::cout << "You suck man" << std::endl;
+      }
+    }
+
+    else{
+      std::cout << "Not Logged In" << std::endl;
+      // Login in
+      if(command.compare("login") == 0){
+        advanceSpaces(input, index);
+        std::string username = advanceCommand(input, index);
+        std::cout << username << std::endl;
+        std::string ans = login(username);
+        break;
+      }
+    }
+  }
+
+  //cleanup
+  close(atmSocket);
+  return 0;
+  }
