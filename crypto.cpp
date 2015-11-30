@@ -76,7 +76,7 @@ ssize_t cwrite(int fd, const void *buf, size_t len) {
 	//for(int bufferIndex = 0; bufferIndex < len; bufferIndex += PACKET_DATA_LENGTH) {
 	for(int bufferIndex = 0; bufferIndex < len; bufferIndex += PACKET_DATA_LENGTH) {
 		//char* toSend = buf[bufferIndex];
-		char* toSend = ((char*)buf)[bufferIndex];
+		char* toSend = (&(char*)buf)[bufferIndex];
 		//char* key = OTP(&indexOfPad, PACKET_DATA_LENGTH + PACKET_CHECKSUM_LENGTH);
 		char* key = OTP(indexOfPad, PACKET_LENGTH);
 		//char* mac = sha-256(concat(toSend, key));
