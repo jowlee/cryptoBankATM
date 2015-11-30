@@ -161,6 +161,7 @@ ssize_t cread(int fd, void *buf, size_t count) {
 		char* mac = sha_256(concat(message, key, PACKET_DATA_LENGTH, PACKET_CHECKSUM_LENGTH));
 		if(!charArrayEquals(checksum, mac, PACKET_LENGTH)) {
 			//checksum != mac
+			delete[] mac;
 			return -1;
 		}
 		
@@ -169,6 +170,7 @@ ssize_t cread(int fd, void *buf, size_t count) {
 			buf[i] = message[i];
 		}
 		buf += PACKET_DATA_LENGTH;
+		delete[] mac;
 	}
 	return amount_recv;	
 }
@@ -224,7 +226,7 @@ bool charArrayEquals(const char* data1, const char* data2, int size) {
 }
 
 char* concat(const char* left, const char* right, int sizel, int sizer) {
-	char result[sizel + sizer];
+	char* result = new char[sizel + sizer];
 	for(int i = 0; i < sizel; i++) {
 		result[i] = left[i];
 	}
