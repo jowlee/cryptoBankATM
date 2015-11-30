@@ -39,8 +39,8 @@ ssize_t cwrite(int fd, const void *buf, size_t count) {
 		return -1;
 	}
 	//1
-	//long myChecksum = xor(OTP(&indexOfPad, PACKET_DATA_LENGTH + PACKET_CHECKSUM_LENGTH), OTP(&indexOfPad, PACKET_DATA_LENGTH + PACKET_CHECKSUM_LENGTH));
-	unsigned long long myChecksum = xorCharArray(OTP(&indexOfPad,PACKET_LENGTH), OTP(&indexOfPad, PACKET_LENGTH));
+	//char* myChecksum = xor(OTP(&indexOfPad, PACKET_DATA_LENGTH + PACKET_CHECKSUM_LENGTH), OTP(&indexOfPad, PACKET_DATA_LENGTH + PACKET_CHECKSUM_LENGTH));
+	char* myChecksum = xorCharArray(OTP(&indexOfPad,PACKET_LENGTH), OTP(&indexOfPad, PACKET_LENGTH));
 	//2
 	//byte* response = response from receiver
 	char buffer[PACKET_LENGTH];
@@ -87,8 +87,10 @@ ssize_t cwrite(int fd, const void *buf, size_t count) {
 		//send xor(message, pad) to reciever 
 		n = write(fd, xorCharArray(message, pad), PACKET_LENGTH);
 		if (n < 0) {
+			delete[] key;
 			return -1;
 		}
+		delete[] key;
 		//3
 	}
 }
@@ -179,7 +181,7 @@ char* OTP(unsigned long long* index, const unsigned long long amount) {
 	std::ifstream pad;
 	pad.open("otp.key");
 	pad.seekg(*index);
-	char result[amount];
+	char* result = new char[amount];
 	pad.read(result, amount);
 	pad.close();
 	*index += amount;
@@ -194,7 +196,7 @@ char* OTP(unsigned long long* index, const unsigned long long amount) {
 
 char* xorCharArray(const char* first, const char* second, unsigned long long length) {
 	//byte result[length];
-	char result[length];
+	char* result = new char[length];
 	//for(long i = 0; i < length; i++) {
 	for(unsigned long long i = 0; i < length; i++) {
 		result[i] = first[i] ^ second[i];
