@@ -81,7 +81,7 @@ ssize_t cwrite(int fd, const void *buf, size_t len) {
 		//char* mac = sha-256(concat(toSend, key));
 		char* mac = sha_256(concat(toSend, key, PACKET_DATA_LENGTH, PACKET_CHECKSUM_LENGTH));
 		//char* message = concat(toSend, mac);
-		char* message = concat(toSend, mac, bufferIndex, PACKET_DATA_LENGTH, PACKET_CHECKSUM_LENGTH);
+		char* message = concat(toSend, mac, PACKET_DATA_LENGTH, PACKET_CHECKSUM_LENGTH);
 		//char* pad = OTP(&indexOfPad, PACKET_DATA_LENGTH + PACKET_CHECKSUM_LENGTH);
 		char* pad = OTP(indexOfPad, PACKET_LENGTH);
 		//send xor(message, pad) to reciever 
