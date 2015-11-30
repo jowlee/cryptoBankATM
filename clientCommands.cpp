@@ -18,7 +18,7 @@ void advanceSpaces(const std::string &line, int &index) {
 
 
 
-void login(const std::string username){
+/*void login(const std::string username){
 
   std::string cardInfo;
   std::string cardName = username + ".card";
@@ -38,7 +38,7 @@ void login(const std::string username){
 
 
 
-}
+}*/
 
 			// 	if (card_read != AES_KEY_LENGTH){
 			// 		printf("Error while reading card. Try again\n");
