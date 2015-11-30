@@ -157,7 +157,7 @@ ssize_t cread(int fd, void *buf, size_t count) {
 		
 		//copy message into buffer
 		for(int i = 0; i < PACKET_DATA_LENGTH; i++) {
-			buf[i] = messsage[i];
+			buf[i] = message[i];
 		}
 		buf += PACKET_DATA_LENGTH;
 	}
