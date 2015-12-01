@@ -12,8 +12,8 @@
 #include <cstring>
 #include <pthread.h>			// For multithreading
 #include <stdint.h>
-#include <typeinfo>
 
+#include "serverCommands.cpp"
 
 
 
@@ -29,8 +29,6 @@ struct thread_info { 	   		/* Used as argument to thread_start() */
 
 //HashMap of usernames to a tuple of user info or user object containing {username, pin, balance}
 
-void deposit(const std::string* user, unsigned long amount);
-void balance(const std::string* user);
 
 void error(const char *msg);
 
@@ -94,13 +92,6 @@ int main(int argc, char *argv[]) {
 }
 
 //
-void deposit(const std::string* user, unsigned long amount) {
-  std::cout << "dtest" << std::endl;
-}
-
-void balance(const std::string* user) {
-  std::cout << "btest" << std::endl;
-}
 void error(const char *msg)
 {
     std::cerr << msg <<std::endl;
@@ -145,6 +136,7 @@ void* consoleThread(void *threadid) {
 	pthread_exit(NULL);		// Ends the thread
 }
 
+
 void* socketThread(void* args) {
   struct thread_info *tinfo;
   tinfo = (thread_info *) args;
@@ -155,10 +147,14 @@ void* socketThread(void* args) {
     char buffer[256];
 
     bzero(buffer,256);
+
     n = read(sock,buffer,255);
+    buffer[n-1] = '\0';
     if (n < 0) error("ERROR reading from socket");
     printf("Here is the message: %s\n",buffer);
-    n = write(sock,"I got your message",18);
+
+    n = write(sock,"I got your message\0",19);
+
     if (n < 0) error("ERROR writing to socket");
     if (buffer == "exit") {
       std::cout << "exiting!" << std::endl;
