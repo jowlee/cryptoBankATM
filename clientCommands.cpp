@@ -18,7 +18,7 @@ bool validPin(std::string pin){
 // Read input until we read a space, then for each character add it to the command string
 std::string advanceCommand(const std::string& line, int &index) {
   std::string command = "";
-  for(; line[index] != '\n' && line[index] != ' ' && index <= line.length(); index++) {
+  for(; line[index] != '\n' && line[index] != '\0' && line[index] != ' ' && index <= line.length(); index++) {
     command += line[index];
   }
   return command;
