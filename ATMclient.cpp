@@ -80,7 +80,7 @@ int main(int argc, char *argv[]){
       closeSocket(atmSocket);
     }
 
-    if(!loggedin){
+    if(loggedin){
       // Login in
       if(command.compare("balance") == 0){
         advanceSpaces(input, index);
