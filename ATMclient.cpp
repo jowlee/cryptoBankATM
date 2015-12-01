@@ -111,9 +111,11 @@ int main(int argc, char *argv[]){
 
       else if(command.compare("logout") == 0){
         advanceSpaces(input, index);
-				closeSocket(atmSocket);
+				// closeSocket(atmSocket);
+        sessionKey = "";
+        int n = write(atmSocket, "logout", 6);
         std::cout << "Logging Out..." << std::endl;
-        exit(0);
+        // exit(0);
       }
       else{
         std::cout << "You suck man" << std::endl;

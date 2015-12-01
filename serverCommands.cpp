@@ -42,12 +42,19 @@ class userInfo {
     bool isLoggedIn() {
       return loggedIn;
     }
-    bool Login(std::string pin) {
+    bool login(std::string pin) {
       if (this->pin.compare(pin) == 0) {
+        if (loggedIn) {
+          // user cannot login if already logged in
+          return false;
+        }
         loggedIn = true;
         return true;
       }
       return false;
+    }
+    void logout() {
+      loggedIn = false;
     }
     std::string withdraw(std::string amo) {
       int amount = atoi(amo.c_str());
@@ -81,7 +88,7 @@ class userDB {
     bool loginUser(std::string name, std::string pin) {
       userInfo *user;
       user = this->findUser(name);
-      return user->Login(pin);
+      return user->login(pin);
     }
     void transfer(std::string transferer, std::string transferee, std::string amount) {
       userInfo* from = this->findUser(transferer);
