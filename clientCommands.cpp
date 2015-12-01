@@ -59,8 +59,7 @@ std::string login(const std::string username, int socketNo){
 
   char message[256];
 
-  strcpy (message,"nOsEsSiOnKeY ");
-  strcat(message, " login ");
+  strcpy(message, "login ");
   strcat(message, username.c_str());
   strcat(message, " ");
   strcat(message, password.c_str());
@@ -76,6 +75,8 @@ std::string login(const std::string username, int socketNo){
   std::string response(buffer);
   int index = 0;
   std::string works = advanceCommand(response, index);
+
+  std::cout << response << " " << works << std::endl;
 
   if(works.compare("y") == 0){
     advanceSpaces(response, index);
