@@ -59,6 +59,7 @@ void advanceSpaces(const std::string &line, int &index) {
 int parseRecieve(char * recieve, int messageNumber, int socketNo){
   int messageIndex = 0;
   std::string number = advanceCommand(recieve, messageIndex);
+  advanceSpaces(recieve, messageIndex);
   int num = atoi(number.c_str());
 
   std::cout << recieve << std::endl;

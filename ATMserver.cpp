@@ -132,7 +132,7 @@ std::string genSessionKey(std::string username) {
   ss << std::setfill('0') << std::setw(4) << secret;
   return username + '_' + ss.str();
 }
-std::string parseCommands(char buffer[], userDB* users, std::string& sessionKey, int sentNumber) {
+std::string parseCommands(char buffer[], userDB* users, std::string& sessionKey, int& sentNumber) {
   int index = 0;
   bool loggedIn = false;
   std::string input(buffer);
@@ -140,9 +140,11 @@ std::string parseCommands(char buffer[], userDB* users, std::string& sessionKey,
   std::string sendStr;
 
   int cliNumber = atoi(advanceCommand(input, index).c_str());
-  if (cliNumber != sentNumber+1) {
+  sentNumber ++;
+  if (cliNumber != sentNumber) {
     return "not the message I was expecting";
   }
+  sentNumber ++;
 
 
   if (sessionKey.length() != 0) {
@@ -214,8 +216,7 @@ std::string parseCommands(char buffer[], userDB* users, std::string& sessionKey,
     sendStr = "error! bad command!";
   }
   std::stringstream ss;
-  ss << cliNumber+1;
-  std::cout << ss.str() + " " + sendStr << std::endl;
+  ss << sentNumber;
   return ss.str() + " " + sendStr;
 }
 
@@ -259,12 +260,11 @@ void* socketThread(void* args) {
       std::cout << buffer << std::endl;
     }
     std::string send = parseCommands(buffer, users, sessionKey, sentNumber);
+    n = write(sock, send.c_str(), send.length());
     if (send.compare("not the message I was expecting") == 0) {
-      std::cout << "````error````" << std::endl;
       close(sock);
       break;
     }
-    n = write(sock, send.c_str(), send.length());
   }
   pthread_exit(NULL);		// Ends the thread
   return NULL;
