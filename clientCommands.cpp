@@ -71,7 +71,7 @@ std::string login(const std::string username, int socketNo){
   strcat(message, " ");
   strcat(message, password.c_str());
 
-  int n = write(socketNo, message, strlen(message));
+  int n = write(socketNo, message, strlen(message)+1);
   if (n < 0) error("ERROR writing to socket");
 
   char buffer[256];

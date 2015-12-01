@@ -12,6 +12,7 @@
 #include <cstring>
 #include <pthread.h>			// For multithreading
 #include <stdint.h>
+#include <sstream>
 
 #include "serverCommands.cpp"
 
@@ -82,7 +83,7 @@ int main(int argc, char *argv[]) {
           continue;
         }
         pthread_t thread;
-        thread_info args;
+        // thread_info args;
         args.sock = newsockfd;
 
         // pid = fork();
@@ -139,11 +140,17 @@ void *consoleThread(void *threadid) {
 	}
 	pthread_exit(NULL);		// Ends the thread
 }
-
-void parseCommands(char buffer[], userDB* users, std::string& sessionKey) {
+std::string genSessionKey(std::string username) {
+  int secret = rand() % 10 + 1;
+  std::stringstream ss;
+  ss << secret;
+  return username + ss.str();
+}
+std::string parseCommands(char buffer[], userDB* users, std::string& sessionKey) {
   int index = 0;
   std::string input(buffer);
   std::string command = advanceCommand(input, index);
+  std::string sendStr;
   advanceSpaces(input, index);
   if (command.compare("login") == 0) {
     std::string username = advanceCommand(input, index);
@@ -151,7 +158,10 @@ void parseCommands(char buffer[], userDB* users, std::string& sessionKey) {
     std::string pin = advanceCommand(input, index);
     if (users->loginUser(username, pin)) {
       std::cout << "logged in!" << std::endl;
-      sessionKey = username;
+      sessionKey = genSessionKey(username);
+      sendStr = "y " + sessionKey;
+    } else {
+      sendStr = "n";
     }
   } else if (command.compare("balance") == 0) {
 
@@ -164,7 +174,7 @@ void parseCommands(char buffer[], userDB* users, std::string& sessionKey) {
   } else {
     std::cout << "error! bad command!" << std::endl;
   }
-
+  return sendStr;
 }
 
 void* socketThread(void* args) {
@@ -179,15 +189,20 @@ void* socketThread(void* args) {
   while (1) {
     int n;
     char buffer[256];
+    char sendBuffer[256];
     bzero(buffer,256);
+    bzero(sendBuffer,256);
 
     n = read(sock,buffer,255);
     buffer[n-1] = '\0';
-    if (n < 0) error("ERROR reading from socket");
-    printf("Here is the message: %s\n",buffer);
-    parseCommands(buffer, users, sessionKey);
-
-    n = write(sock,"I got your message\0",19);
+    if (n < 0) {
+      break;
+      error("ERROR reading from socket");
+    }
+    std::cout << n << std::endl;
+    // printf("Here is the message: %s\n",buffer);
+    std::string send = parseCommands(buffer, users, sessionKey);
+    n = write(sock, send.c_str(), send.length());
 
     if (n < 0) error("ERROR writing to socket");
     if (buffer == "exit") {

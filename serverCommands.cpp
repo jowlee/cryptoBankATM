@@ -34,6 +34,7 @@ class userInfo {
       if (this->pin.compare(pin) == 0) {
         loggedIn = true;
         return true;
+
       }
       return false;
     }
@@ -48,7 +49,7 @@ class userDB {
       users.push_back(user);
     }
     bool loginUser(std::string name, std::string pin) {
-      for (int i = 0; i ++; i < users.size()) {
+      for (int i = 0; i < users.size(); i++) {
         userInfo user = users[i];
         if (user.hasName(name)) {
           return user.Login(pin);
