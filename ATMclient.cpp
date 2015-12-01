@@ -16,11 +16,6 @@
 #define read cread
 #include "clientCommands.cpp"
 
-void error(const char *msg){
-    perror(msg);
-    exit(0);
-}
-
 void closeSocket(int atmSocket) {
 	printf("Closing \n");
 	fflush(stdout);
@@ -69,7 +64,7 @@ int main(int argc, char *argv[]){
     int index = 0;
     std::string input(buf);
     std::string command = advanceCommand(input, index);
-    std::cout << command << std::endl;
+    // std::cout << command << std::endl;
 
 
     // Wait for user to input command
@@ -81,13 +76,20 @@ int main(int argc, char *argv[]){
 
     // n = read(sock,buffer,255);
     // if (n < 0) error("ERROR reading from socket");
+    // std::cout << "compare exit: " <<  command.length() << std::endl;
+    // std::cout << strlen(command.c_str()) << std::endl;
+
+    // std::cout << command << " " << command.compare("exit") << std::endl;
+    if(command.compare("exit") == 0){
+      closeSocket(atmSocket);
+    }
 
     if(loggedin){
       // Login in
       if(command.compare("balance") == 0){
         advanceSpaces(input, index);
         std::cout << "Obtaining Balance..." << std::endl;
-
+        balance("test", atmSocket);
       }
 
       else if(command.compare("withdraw") == 0){
@@ -118,14 +120,13 @@ int main(int argc, char *argv[]){
     }
 
     else{
-      std::cout << "Not Logged In" << std::endl;
       // Login in
       if(command.compare("login") == 0){
         advanceSpaces(input, index);
         std::string username = advanceCommand(input, index);
         std::cout << username << std::endl;
-        std::string ans = login(username);
-        break;
+        std::string ans = login(username, atmSocket);
+        // break;
       }
     }
   }

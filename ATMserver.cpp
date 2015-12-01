@@ -18,12 +18,14 @@
 #define write cwrite
 #define read cread
 
+#include "serverCommands.cpp"
+
 
 
 struct thread_info { 	   		/* Used as argument to thread_start() */
 	pthread_t 	thread_id;     /* ID returned by pthread_create() */
 	int 			sock;			/* Socket. I think */
-	// user_type		*users; 		/* Pointer to global users object */
+	userDB		*users; 		/* Pointer to global users object */
 	//session_type	*sessions;		// pointer to global sessions object
 	// CryptoPP::SecByteBlock session_key;
 	// string 			username;
@@ -32,13 +34,9 @@ struct thread_info { 	   		/* Used as argument to thread_start() */
 
 //HashMap of usernames to a tuple of user info or user object containing {username, pin, balance}
 
-void deposit(const std::string* user, unsigned long amount);
-void balance(const std::string* user);
 
 void error(const char *msg);
 
-std::string advanceCommand(const std::string& line, int &index);
-void advanceSpaces(const std::string &line, int &index);
 void* consoleThread(void *threadid);
 void* socketThread(void* arg);
 
@@ -75,6 +73,11 @@ int main(int argc, char *argv[]) {
 
     pthread_t thread;
     thread_info args;
+
+    userDB* users = new userDB();
+    init_bank(users);
+    args.users = users;
+
     pthread_create(&thread, NULL, consoleThread, &args);
 
     while (1) {
@@ -86,8 +89,10 @@ int main(int argc, char *argv[]) {
         pthread_t thread;
         thread_info args;
         args.sock = newsockfd;
-        std::cout << "thread" << std::endl;
+
+        // pid = fork();
         pthread_create(&thread, NULL, socketThread, &args);
+        // close(newsockfd);
         // int threadNum* ++;
     } /* end of while */
     close(newsockfd);
@@ -97,32 +102,24 @@ int main(int argc, char *argv[]) {
 }
 
 //
-void deposit(const std::string* user, unsigned long amount) {
-  std::cout << "dtest" << std::endl;
-}
-
-void balance(const std::string* user) {
-  std::cout << "btest" << std::endl;
-}
-void error(const char *msg)
-{
+void error(const char *msg) {
     std::cerr << msg <<std::endl;
     exit(1);
 }
 // Read input until we read a space, then for each character add it to the command string
 std::string advanceCommand(const std::string& line, int &index) {
   std::string command = "";
-  for(; line[index] != ' ' && index <= line.length(); index++) {
+  for(; line[index] != ' ' && index < line.length(); index++) {
     command += line[index];
   }
   return command;
 }
 // Skip any number of spaces
 void advanceSpaces(const std::string &line, int &index) {
-  for(; line[index] == ' ' && index <= line.length(); index++);
+  for(; line[index] == ' ' && index < line.length(); index++);
 }
 
-void* consoleThread(void *threadid) {
+void *consoleThread(void *threadid) {
 	// Read in commands from cin
 	for(std::string line; getline(std::cin, line);) {
 
@@ -132,7 +129,7 @@ void* consoleThread(void *threadid) {
 		std::string username = advanceCommand(line, index);
 
 		//deposit ​[username] [amount] ­ Increase <username>’s ​balance by <amount>
-		if(command.compare("deposit") == 1) {
+		if(command.compare("deposit") == 0) {
       advanceSpaces(line, index);
 			std::string amount = advanceCommand(line, index);
 
@@ -140,7 +137,7 @@ void* consoleThread(void *threadid) {
 			deposit(&username, atol(amount.c_str()));
 		}
 		//balance​ [username] ­ Print the balance of <username>
-		else if(command.compare("balance") == 1) {
+		else if(command.compare("balance") == 0) {
 			// Execute balance command
 			balance(&username);
 		}
@@ -148,20 +145,55 @@ void* consoleThread(void *threadid) {
 	pthread_exit(NULL);		// Ends the thread
 }
 
+void parseCommands(char buffer[], userDB* users, std::string& sessionKey) {
+  int index = 0;
+  std::string input(buffer);
+  std::string command = advanceCommand(input, index);
+  advanceSpaces(input, index);
+  if (command.compare("login") == 0) {
+    std::string username = advanceCommand(input, index);
+    advanceSpaces(input, index);
+    std::string pin = advanceCommand(input, index);
+    if (users->loginUser(username, pin)) {
+      std::cout << "logged in!" << std::endl;
+      sessionKey = username;
+    }
+  } else if (command.compare("balance") == 0) {
+
+  } else if (command.compare("withdraw") == 0) {
+
+  } else if (command.compare("transfer") == 0) {
+
+  } else if (command.compare("logout") == 0) {
+
+  } else {
+    std::cout << "error! bad command!" << std::endl;
+  }
+
+}
+
 void* socketThread(void* args) {
   struct thread_info *tinfo;
   tinfo = (thread_info *) args;
   int sock = tinfo->sock;
+  userDB *users = tinfo->users;
+  std::string sessionKey;
+
+  bool logginIn = false;
 
   while (1) {
     int n;
     char buffer[256];
-
     bzero(buffer,256);
+
     n = read(sock,buffer,255);
+    buffer[n-1] = '\0';
     if (n < 0) error("ERROR reading from socket");
     printf("Here is the message: %s\n",buffer);
-    n = write(sock,"I got your message",18);
+    parseCommands(buffer, users, sessionKey);
+
+    n = write(sock,"I got your message\0",19);
+
     if (n < 0) error("ERROR writing to socket");
     if (buffer == "exit") {
       std::cout << "exiting!" << std::endl;
