@@ -34,13 +34,15 @@ class userInfo {
       if (this->pin.compare(pin) == 0) {
         loggedIn = true;
         return true;
-
       }
       return false;
     }
-    bool withdraw(std::string amo) {
+    std::string withdraw(std::string amo) {
       int amount = atoi(amo.c_str());
       balance -= amount;
+      std::stringstream ss;
+      ss << amount;
+      return ss.str();
     }
 };
 
@@ -54,24 +56,15 @@ class userDB {
     }
     userInfo* findUser(std::string name) {
       for (int i = 0; i < users.size(); i++) {
-        userInfo *user = new userInfo();
-         *user = users[i];
-        if (user->hasName(name)) {
-          return user;
+        if (users[i].hasName(name)) {
+          return &users[i];
         }
       }
-
     }
     bool loginUser(std::string name, std::string pin) {
-      userInfo *user = this->findUser(name);
+      userInfo *user;
+      user = this->findUser(name);
       return user->Login(pin);
-      // // for (int i = 0; i < users.size(); i++) {
-      // //   userInfo user = users[i];
-      // //   if (user.hasName(name)) {
-      // //     return user.Login(pin);
-      // //   }
-      // // }
-      // return false;
     }
 };
 void init_bank(userDB* users) {

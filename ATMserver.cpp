@@ -187,10 +187,10 @@ std::string parseCommands(char buffer[], userDB* users, std::string& sessionKey)
     sendStr = thisUser->getBalance();
   } else if (command.compare("withdraw") == 0 && loggedIn) {
     std::string amount = advanceCommand(input, index);
-    thisUser->withdraw(amount);
+    std::string takenOut = thisUser->withdraw(amount);
     sendStr = "withdrew";
   } else if (command.compare("transfer") == 0 && loggedIn) {
-
+    
   } else if (command.compare("logout") == 0 && loggedIn) {
 
   } else if (command.compare("init") == 0) {
