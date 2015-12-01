@@ -106,7 +106,7 @@ void error(const char *msg) {
 // Read input until we read a space, then for each character add it to the command string
 std::string advanceCommand(const std::string& line, int &index) {
   std::string command = "";
-  for(; line[index] != ' ' && index < line.length(); index++) {
+  for(; line[index] != ' ' && line[index] != '\0' && index < line.length(); index++) {
     command += line[index];
   }
   return command;
@@ -152,15 +152,25 @@ std::string genSessionKey(std::string username) {
 }
 std::string parseCommands(char buffer[], userDB* users, std::string& sessionKey) {
   int index = 0;
+  bool loggedIn = false;
   std::string input(buffer);
+  userInfo *thisUser;
   std::string sendStr;
+
   if (sessionKey.length() != 0) {
+    std::cout << "session key: " << sessionKey << std::endl;
+    // should check to see if client's session key equals clients session key
+    std::string seshKey = advanceCommand(input, index);
+    advanceSpaces(input, index);
     int pos = sessionKey.find('_');
     std::string someUser = sessionKey.substr(0, pos);
-    std::cout << someUser << std::endl;
+    thisUser = users->findUser(someUser);
+    loggedIn = true;
   }
 
   std::string command = advanceCommand(input, index);
+  // std::cout << "balance: " << (command.compare("balance") == 0) << " " << loggedIn << std::endl;
+
   advanceSpaces(input, index);
   if (command.compare("login") == 0) {
     std::string username = advanceCommand(input, index);
@@ -173,17 +183,20 @@ std::string parseCommands(char buffer[], userDB* users, std::string& sessionKey)
     } else {
       sendStr = "n";
     }
-  } else if (command.compare("balance") == 0) {
+  } else if (command.compare("balance") == 0 && loggedIn) {
+    sendStr = thisUser->getBalance();
+  } else if (command.compare("withdraw") == 0 && loggedIn) {
+    std::string amount = advanceCommand(input, index);
+    thisUser->withdraw(amount);
+    sendStr = "withdrew";
+  } else if (command.compare("transfer") == 0 && loggedIn) {
 
-  } else if (command.compare("withdraw") == 0) {
-
-  } else if (command.compare("transfer") == 0) {
-
-  } else if (command.compare("logout") == 0) {
+  } else if (command.compare("logout") == 0 && loggedIn) {
 
   } else if (command.compare("init") == 0) {
     sendStr = "connected to bank";
   } else {
+    std::cout << "bad command" << std::endl;
     sendStr = "error! bad command!";
   }
   return sendStr;
