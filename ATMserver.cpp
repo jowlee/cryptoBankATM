@@ -136,7 +136,6 @@ std::string parseCommands(char buffer[], userDB* users, std::string& sessionKey)
   std::string sendStr;
 
   if (sessionKey.length() != 0) {
-    std::cout << "session key: " << sessionKey << std::endl;
     std::string cliSeshKey = advanceCommand(input, index);
 
     int pos = sessionKey.find('_');
@@ -161,6 +160,7 @@ std::string parseCommands(char buffer[], userDB* users, std::string& sessionKey)
     // checks to see if client's session key equals clients session key
     if (sessionKey.compare(cliSeshKey) != 0) return "session key has been tampered with";
   }
+  // std::cout << "session key: " << sessionKey << std::endl;
 
   std::string command = advanceCommand(input, index);
   // std::cout << "balance: " << (command.compare("balance") == 0) << " " << loggedIn << std::endl;
@@ -229,12 +229,23 @@ void* socketThread(void* args) {
 
     if (n < 0) error("ERROR writing to socket");
     if (n == 0) {
-      std::cout << "atm connection ~ : " <<  "socket disconnected" << std::endl;
+      std::cout << "atm connection ~ : " <<  "socket# " << sock << " disconnected" << std::endl;
+      if (sessionKey.length() != 0) {
+        int pos = sessionKey.find('_');
+        userInfo *thisUser;
+        std::string someUser = sessionKey.substr(0, pos);
+        thisUser = users->findUser(someUser);
+        thisUser->logout();
+      }
       break;
     }
-
-    std::cout << "atm connection ~ : ";
-    std::cout << buffer << std::endl;
+    if (std::string(buffer).compare("init") == 0) {
+      std::cout << "atm connection ~ : ";
+      std::cout << "socket# " << sock << " connected" << std::endl;
+    } else {
+      std::cout << "atm connection ~ : ";
+      std::cout << buffer << std::endl;
+    }
     std::string send = parseCommands(buffer, users, sessionKey);
     n = write(sock, send.c_str(), send.length());
   }
@@ -255,7 +266,10 @@ void *consoleThread(void *args) {
 		int index = 0;
 		std::string command = advanceCommand(line, index);
 		std::string username = advanceCommand(line, index);
-    if (!users->userExists(username)) {
+    if (command.compare("balance") != 0 && command.compare("deposit") != 0) {
+      sendStr = "Bank Commands: [deposit|balance] [username] <amount>";
+    }
+    else if (!users->userExists(username)) {
       sendStr = "user \"" + username + "\" does not exist";
     }
 		else if(command.compare("deposit") == 0) {
@@ -271,7 +285,6 @@ void *consoleThread(void *args) {
 		}
     std::cout << sendStr << std::endl;
     std::cout << ("bank ~ : ");
-
-	}
+  }
 	pthread_exit(NULL);		// Ends the thread
 }
