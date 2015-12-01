@@ -199,10 +199,12 @@ void transfer(const std::string sessionKey, std::string amount, std::string user
     }
     std:: cout << "Response is  " << buffer << std::endl;
 
-    if(true){
 
-      char message[256];
-      strcpy (message,"transfer ");
+
+    if((std::string(buffer)).compare("y") == 0){
+      bzero(message,256);
+      strcpy (message, sessionKey.c_str());
+      strcat (message," transfer ");
       strcat(message, amount.c_str());
       strcat(message, " ");
       strcat(message, username.c_str());
