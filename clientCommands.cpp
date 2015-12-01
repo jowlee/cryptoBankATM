@@ -4,6 +4,14 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
+
+void closeSocket(int atmSocket) {
+	printf("Closing \n");
+	fflush(stdout);
+	close(atmSocket);
+	exit(1);
+}
+
 void error(const char *msg){
     perror(msg);
     exit(0);
@@ -43,15 +51,36 @@ void advanceSpaces(const std::string &line, int &index) {
 
 
 
-int parseRecieve(char * recieve, int messageNumber){
+int parseRecieve(char * recieve, int messageNumber, int socketNo){
   int messageIndex = 0;
   std::string number = advanceCommand(recieve, messageIndex);
   int num = atoi(number.c_str());
+
+  std::cout << recieve << std::endl;
+
+  if(num == -1){
+    // Error dont read response
+    bzero(recieve,256);
+    closeSocket(socketNo);
+    exit(-1);
+    // return messageNumber;
+  }
+  else if(num!= (++messageNumber)){
+    // Error dont read response
+    bzero(recieve,256);
+    closeSocket(socketNo);
+    exit(-1);
+    // return messageNumber;
+  }
+
   std::string converted(recieve);
   std::string subConverted = converted.substr(messageIndex, converted.length());
   bzero(recieve,256);
   strcpy (recieve,subConverted.c_str());
   messageNumber++;
+
+  std::cout << recieve << std::endl;
+
   return messageNumber;
 }
 
@@ -70,7 +99,7 @@ int sendRecieve(int socketNo, char sendMessage[], char*  recieve, int messageNum
   bzero(recieve,256);
   n = read(socketNo,recieve,255);
   if (n < 0) error("ERROR reading from socket");
-  messageNumber = parseRecieve(recieve, messageNumber);
+  messageNumber = parseRecieve(recieve, messageNumber, socketNo);
   return messageNumber;
 }
 

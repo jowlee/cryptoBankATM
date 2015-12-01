@@ -13,13 +13,6 @@
 #include <netdb.h>
 #include "clientCommands.cpp"
 
-void closeSocket(int atmSocket) {
-	printf("Closing \n");
-	fflush(stdout);
-	close(atmSocket);
-	exit(1);
-}
-
 int main(int argc, char *argv[]){
 
   // Check for arguments (port number is provided)
@@ -52,21 +45,12 @@ int main(int argc, char *argv[]){
 	// Initial message
 
 	int messageNumber = 1;
-	// TODO: implement message number
-	// std::string number= std::to_string(messageNumber);
-	// messageNumber++;
 
 	char message[256];
 	strcpy(message,  "init");
 
 	char buffer[256];
 	messageNumber = sendRecieve(atmSocket, message, buffer, messageNumber);
-
-	// int n = write(atmSocket, mess, strlen(mess)+1);
-	// if (n < 0) error("ERROR something is wrong");
-	// char buf[256];
-	// n = read(atmSocket,buf,255);
-  // if (n < 0) error("ERROR reading from socket");
 
   //input loop
   bool loggedin = false;
@@ -78,10 +62,6 @@ int main(int argc, char *argv[]){
   while(1){
 
 		getline(std::cin, input);
-
-    // fgets(buf, 255, stdin);
-		// buf[strlen(buf)-1] = '\0';	//trim off trailing newline
-    // std::string input(buf);
     int index = 0;
 		if (input.length() == 0) continue;
     std::string command = advanceCommand(input, index);
@@ -125,18 +105,11 @@ int main(int argc, char *argv[]){
 				strcpy(message,  "logout");
 				messageNumber = sendRecieve(atmSocket, message, buffer, messageNumber);
 
-
-        // int n = write(atmSocket, "logout", 6);
-				// if (n < 0) error("ERROR writing from socket");
-				// char buffer[256];
-				// bzero(buffer,256);
-				// n = read(atmSocket,buffer,255);
-				// if (n < 0) error("ERROR reading from socket");
         std::cout << "Logging Out..." << std::endl;
 
       }
       else{
-        std::cout << "You suck man" << std::endl;
+        std::cout << "Command not found" << std::endl;
       }
     }
 
