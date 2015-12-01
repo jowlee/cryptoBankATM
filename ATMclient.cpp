@@ -78,10 +78,9 @@ int main(int argc, char *argv[]){
     // std::cout << command << " " << command.compare("exit") << std::endl;
     if(command.compare("exit") == 0){
       closeSocket(atmSocket);
-
     }
 
-    if(loggedin){
+    if(!loggedin){
       // Login in
       if(command.compare("balance") == 0){
         advanceSpaces(input, index);
@@ -117,9 +116,7 @@ int main(int argc, char *argv[]){
     }
 
     else{
-      std::cout << "Not Logged In" << std::endl;
       // Login in
-      std::cout << "compare login: " << command.compare("login") << std::endl;
       if(command.compare("login") == 0){
         advanceSpaces(input, index);
         std::string username = advanceCommand(input, index);
