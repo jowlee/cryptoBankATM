@@ -20,8 +20,22 @@ bool checkGood(std::string response){
     std::cout << "didn't work" << std::endl;
     return true;
   }
+  if(response.compare("-1") == 0){
+    std::cout << "Error" << std::endl;
+    return true;
+  }
   else return false;
 }
+
+void sendRecieve(int socketNo, char sendMessage[], char*  recieve){
+  int n = write(socketNo, sendMessage, strlen(sendMessage)+1);
+  if (n < 0) error("ERROR writing to socket");
+
+  bzero(recieve,256);
+  n = read(socketNo,recieve,255);
+  if (n < 0) error("ERROR reading from socket");
+}
+
 
 // Read input until we read a space, then for each character add it to the command string
 std::string advanceCommand(const std::string& line, int &index) {
@@ -72,13 +86,11 @@ std::string login(const std::string username, int socketNo){
   strcat(message, " ");
   strcat(message, password.c_str());
 
-  int n = write(socketNo, message, strlen(message)+1);
-  if (n < 0) error("ERROR writing to socket");
-
   char buffer[256];
-  bzero(buffer,256);
-  n = read(socketNo,buffer,255);
-  if (n < 0) error("ERROR reading from socket");
+  sendRecieve(socketNo, message, buffer);
+  if(checkGood(std::string(buffer))){
+    return;
+  }
 
   std::string response(buffer);
   int index = 0;
@@ -87,6 +99,7 @@ std::string login(const std::string username, int socketNo){
   if(works.compare("y") == 0){
     advanceSpaces(response, index);
     std::string code = advanceCommand(response, index);
+    std:: cout << "Logged in" << std::endl;
     return code;
   }
   else{
@@ -102,13 +115,8 @@ void balance(const std::string sessionKey, int socketNo){
   strcpy (message, sessionKey.c_str());
   strcat(message, " balance");
 
-  int n = write(socketNo, message, strlen(message)+1);
-  if (n < 0) error("ERROR writing to socket");
-
   char buffer[256];
-  bzero(buffer,256);
-  n = read(socketNo,buffer,255);
-  if (n < 0) error("ERROR reading from socket");
+  sendRecieve(socketNo, message, buffer);
   if(checkGood(std::string(buffer))){
     return;
   }
@@ -121,13 +129,9 @@ void withdraw(const std::string sessionKey, std::string amount, int socketNo){
   char message[256];
   strcpy (message, sessionKey.c_str());
   strcat(message, " balance");
-  int n = write(socketNo, message, strlen(message)+1);
-  if (n < 0) error("ERROR writing to socket");
 
   char buffer[256];
-  bzero(buffer,256);
-  n = read(socketNo,buffer,255);
-  if (n < 0) error("ERROR reading from socket");
+  sendRecieve(socketNo, message, buffer);
   if(checkGood(std::string(buffer))){
     return;
   }
@@ -136,18 +140,14 @@ void withdraw(const std::string sessionKey, std::string amount, int socketNo){
   float amountf = atof(amount.c_str());
 
   // If sufficient funds, allow withdraw
-  if(amountf < balance){
+  if(amountf <= balance){
     bzero(message,256);
     strcpy (message, sessionKey.c_str());
     strcat (message," withdraw ");
     strcat(message, amount.c_str());
 
-    int n = write(socketNo, message, strlen(message)+1);
-    if (n < 0) error("ERROR writing to socket");
-
     bzero(buffer,256);
-    n = read(socketNo,buffer,255);
-    if (n < 0) error("ERROR reading from socket");
+    sendRecieve(socketNo, message, buffer);
     if(checkGood(std::string(buffer))){
       return;
     }
@@ -166,13 +166,10 @@ void transfer(const std::string sessionKey, std::string amount, std::string user
   char message[256];
   strcpy (message, sessionKey.c_str());
   strcat(message, " balance");
-  int n = write(socketNo, message, strlen(message)+1);
-  if (n < 0) error("ERROR writing to socket");
 
   char buffer[256];
   bzero(buffer,256);
-  n = read(socketNo,buffer,255);
-  if (n < 0) error("ERROR reading from socket");
+  sendRecieve(socketNo, message, buffer);
   if(checkGood(std::string(buffer))){
     return;
   }
@@ -181,25 +178,21 @@ void transfer(const std::string sessionKey, std::string amount, std::string user
   float amountf = atof(amount.c_str());
 
   // If sufficient funds, allow transfer
-  if(amountf < balance){
+  if(amountf <= balance){
 
     // Check if other user exitss
-    bzero(buffer,256);
-    strcpy (buffer, sessionKey.c_str());
-    strcat (buffer," check ");
-    strcat(buffer, username.c_str());
-    int n = write(socketNo, buffer, strlen(buffer)+1);
-    if (n < 0) error("ERROR writing to socket");
+    bzero(message,256);
+    strcpy (message, sessionKey.c_str());
+    strcat (message," check ");
+    strcat(message, username.c_str());
 
     bzero(buffer,256);
-    n = read(socketNo,buffer,255);
-    if (n < 0) error("ERROR reading from socket");
+    sendRecieve(socketNo, message, buffer);
     if(checkGood(std::string(buffer))){
       return;
     }
+
     std:: cout << "Response is  " << buffer << std::endl;
-
-
 
     if((std::string(buffer)).compare("y") == 0){
       bzero(message,256);
@@ -209,15 +202,12 @@ void transfer(const std::string sessionKey, std::string amount, std::string user
       strcat(message, " ");
       strcat(message, username.c_str());
 
-      int n = write(socketNo, message, strlen(message)+1);
-      if (n < 0) error("ERROR writing to socket");
-
       bzero(buffer,256);
-      n = read(socketNo,buffer,255);
-      if (n < 0) error("ERROR reading from socket");
+      sendRecieve(socketNo, message, buffer);
       if(checkGood(std::string(buffer))){
         return;
       }
+
       std:: cout << buffer << std::endl;
     }
     else{

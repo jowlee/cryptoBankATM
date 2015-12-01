@@ -111,11 +111,15 @@ int main(int argc, char *argv[]){
 
       else if(command.compare("logout") == 0){
         advanceSpaces(input, index);
-				// closeSocket(atmSocket);
+				loggedin = false;
         sessionKey = "";
         int n = write(atmSocket, "logout", 6);
+				if (n < 0) error("ERROR writing from socket");
+				char buffer[256];
+				bzero(buffer,256);
+				n = read(atmSocket,buffer,255);
+				if (n < 0) error("ERROR reading from socket");
         std::cout << "Logging Out..." << std::endl;
-        // exit(0);
       }
       else{
         std::cout << "You suck man" << std::endl;
@@ -127,7 +131,6 @@ int main(int argc, char *argv[]){
       if(command.compare("login") == 0){
         advanceSpaces(input, index);
         std::string username = advanceCommand(input, index);
-        std::cout << username << std::endl;
         std::string ans = login(username, atmSocket);
 				if(ans != "broken"){
 					sessionKey = ans;
