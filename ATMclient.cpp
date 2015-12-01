@@ -50,6 +50,12 @@ int main(int argc, char *argv[]){
 
 	// Initial message
 
+	int messageNumber = 1;
+
+	// TODO: implement message number
+	// std::string number= std::to_string(messageNumber);
+	// messageNumber++;
+
 	char mess[256];
 	strcpy(mess, "init");
 	int n = write(atmSocket, mess, strlen(mess)+1);
