@@ -66,7 +66,6 @@ int main(int argc, char *argv[]){
 
   while(1){
 
-		// std::cout << std::endl;
 		getline(std::cin, input);
 
     // fgets(buf, 255, stdin);
