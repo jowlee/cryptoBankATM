@@ -32,8 +32,6 @@ struct thread_info { 	   		/* Used as argument to thread_start() */
 
 void error(const char *msg);
 
-std::string advanceCommand(const std::string& line, int &index);
-void advanceSpaces(const std::string &line, int &index);
 void* consoleThread(void *threadid);
 void* socketThread(void* arg);
 
@@ -81,8 +79,10 @@ int main(int argc, char *argv[]) {
         pthread_t thread;
         thread_info args;
         args.sock = newsockfd;
-        std::cout << "thread" << std::endl;
+
+        // pid = fork();
         pthread_create(&thread, NULL, socketThread, &args);
+        // close(newsockfd);
         // int threadNum* ++;
     } /* end of while */
     close(newsockfd);
@@ -100,17 +100,17 @@ void error(const char *msg)
 // Read input until we read a space, then for each character add it to the command string
 std::string advanceCommand(const std::string& line, int &index) {
   std::string command = "";
-  for(; line[index] != ' ' && index <= line.length(); index++) {
+  for(; line[index] != ' ' && index < line.length(); index++) {
     command += line[index];
   }
   return command;
 }
 // Skip any number of spaces
 void advanceSpaces(const std::string &line, int &index) {
-  for(; line[index] == ' ' && index <= line.length(); index++);
+  for(; line[index] == ' ' && index < line.length(); index++);
 }
 
-void* consoleThread(void *threadid) {
+void *consoleThread(void *threadid) {
 	// Read in commands from cin
 	for(std::string line; getline(std::cin, line);) {
 
@@ -136,16 +136,18 @@ void* consoleThread(void *threadid) {
 	pthread_exit(NULL);		// Ends the thread
 }
 
+// void parseCommands()
 
 void* socketThread(void* args) {
   struct thread_info *tinfo;
   tinfo = (thread_info *) args;
   int sock = tinfo->sock;
 
+  bool logginIn = false;
+
   while (1) {
     int n;
     char buffer[256];
-
     bzero(buffer,256);
 
     n = read(sock,buffer,255);

@@ -1,3 +1,17 @@
+#include <vectors>
+
+class userBD {
+  std::vector<userInfo> users;
+}
+
+class userInfo {
+  bool loggedIn = false;
+  std::string name;
+  balance
+}
+
+void init_bank()
+
 void deposit(const std::string* user, unsigned long amount);
 void balance(const std::string* user);
 
