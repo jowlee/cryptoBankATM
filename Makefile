@@ -11,3 +11,5 @@ all:
 	g++ $(INC) ATMproxy.cpp crypto.cpp sha256.cpp -lcryptopp -lpthread -o ATMproxy
 	
 	#g++ $(INC) crypto.cpp sha256.cpp -lcryptopp -lpthread -o cryptoTest
+	
+	./makeOTP.sh
