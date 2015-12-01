@@ -184,7 +184,7 @@ std::string parseCommands(char buffer[], userDB* users, std::string& sessionKey)
   } else if (command.compare("init") == 0) {
     sendStr = "connected to bank";
   } else {
-    std::cout << "error! bad command!" << std::endl;
+    sendStr = "error! bad command!";
   }
   return sendStr;
 }
