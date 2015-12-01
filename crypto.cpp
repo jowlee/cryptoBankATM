@@ -10,6 +10,7 @@
 #include <fstream>
 #include <string>
 #include <cstring>
+#include <math.h>
 #include "sha256.h"
 #include "crypto.h"
 
@@ -37,12 +38,15 @@ ssize_t cwrite(int fd, const void *buf, size_t len) {
 	//send nonce to reciever
 	int n;
 	n = write(fd, nonce, PACKET_LENGTH);
+	delete nonce;
 	if (n < 0) {
 		return -1;
 	}
 	//1
 	//char* myChecksum = xor(OTP(&indexOfPad, PACKET_DATA_LENGTH + PACKET_CHECKSUM_LENGTH), OTP(&indexOfPad, PACKET_DATA_LENGTH + PACKET_CHECKSUM_LENGTH));
-	char* myChecksum = xorCharArray(OTP(indexOfPad,PACKET_LENGTH), OTP(indexOfPad, PACKET_LENGTH), PACKET_LENGTH);
+	char* p1 = OTP(indexOfPad,PACKET_LENGTH);
+	char* p2 = OTP(indexOfPad,PACKET_LENGTH);
+	char* myChecksum = xorCharArray(p1, p2, PACKET_LENGTH);
 	//2
 	//byte* response = response from receiver
 	char buffer[PACKET_LENGTH];
@@ -181,9 +185,11 @@ ssize_t cread(int fd, void *buf, size_t len) {
 }
 
 char* OTP(unsigned long long* index, const unsigned long long amount) {
-	std::ifstream pad;
-	pad.open("otp.key");
-	pad.seekg(*index);
+	std::ifstream pad("otp.key", std::ifstream::ate | std::ifstream::binary);
+	//std::ifstream pad;
+	//pad.open("otp.key");
+	pad.seekg(0,std::ios::end);
+	pad.seekg(*index % pad.tellg());
 	char* result = new char[amount];
 	pad.read(result, amount);
 	pad.close();
@@ -216,11 +222,20 @@ unsigned long long unsignedLongLongRand() {
 }
 
 char* longToCharArray(unsigned long long num, int size) {
-	return reinterpret_cast<char*>(num);
+	char* result = new char[size];
+	for(int i = 0; i < sizeof(unsigned long long); i++){
+		result[i] = num % (int)pow (2,(sizeof(char) * 8));
+		num /= (int)pow(2,(sizeof(char) * 8));
+	}
+	return result;
 }
 
 unsigned long long charArrayToLong(const char* data, int size){
-	return reinterpret_cast<unsigned long long>(data);
+	unsigned long long result = 0;
+	for(int i = 0; i < size; i++){
+		result += ((unsigned long long)(unsigned char)data[i]) * (unsigned long long)pow(2,i*(sizeof(char) * 8));
+	}
+	return result;
 }
 
 bool charArrayEquals(const char* data1, const char* data2, int size) {
@@ -246,4 +261,41 @@ char* concat(const char* left, const char* right, int sizel, int sizer) {
 
 char* sha_256(char* buf) {
 	return &sha256(buf)[0];
+}
+
+//For testing
+int main(int argc, char *argv[]){
+	srand (time(NULL));
+	unsigned long long* indexOfPad = new unsigned long long;
+	std::cout << "Index of pad = " << *indexOfPad << std::endl;
+	*indexOfPad = unsignedLongLongRand();
+	std::cout << "Index of pad = " << *indexOfPad << std::endl;
+	char* nonce = longToCharArray(*indexOfPad, PACKET_LENGTH);
+	std::cout << "nonce = " << charArrayToLong(nonce, PACKET_LENGTH) << std::endl;
+	char* pad1 = OTP(indexOfPad,10);
+	char* pad2 = OTP(indexOfPad,10);
+	char* padx = xorCharArray(pad1, pad2, 10);
+	for(int i = 0; i < 10; i++) {
+		std::cout << (unsigned int)(unsigned char)pad1[i] << " ";
+	}
+	std::cout << std::endl;
+	for(int i = 0; i < 10; i++) {
+		std::cout << (unsigned int)(unsigned char)pad2[i] << " ";
+	}
+	std::cout << std::endl;
+	for(int i = 0; i < 10; i++) {
+		std::cout << (unsigned int)(unsigned char)padx[i] << " ";
+	}
+	std::cout << std::endl;
+	std::cout << charArrayEquals(padx, pad2, 10) << std::endl;
+	char* padc = concat(pad1, pad2, 10, 10);
+	for(int i = 0; i < 20; i++) {
+		std::cout << (unsigned int)(unsigned char)padc[i] << " ";
+	}
+	std::cout << std::endl;
+	std::cout << sha_256(padc) << std::endl;
+	std::cout << sha_256(pad1) << std::endl;
+	std::cout << sha_256(padc) << std::endl;
+	delete nonce;
+	delete indexOfPad;
 }
