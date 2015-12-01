@@ -97,7 +97,7 @@ int main(int argc, char *argv[]){
         advanceSpaces(input, index);
         std::string amountString = advanceCommand(input, index);
         float amount = atof(amountString.c_str());
-        std::cout << amount << std::endl;
+				withdraw(sessionKey, amountString, atmSocket){
       }
 
       else if(command.compare("transfer") == 0){
