@@ -13,6 +13,7 @@
 #include <pthread.h>			// For multithreading
 #include <stdint.h>
 #include <sstream>
+#include <iomanip>
 
 #include "serverCommands.cpp"
 
@@ -141,9 +142,9 @@ void *consoleThread(void *threadid) {
 	pthread_exit(NULL);		// Ends the thread
 }
 std::string genSessionKey(std::string username) {
-  int secret = rand() % 10 + 1;
+  int secret = rand() % 1000 + 1;
   std::stringstream ss;
-  ss << secret;
+  ss << std::setfill('0') << std::setw(4) << secret;
   return username + ss.str();
 }
 std::string parseCommands(char buffer[], userDB* users, std::string& sessionKey) {
@@ -194,22 +195,18 @@ void* socketThread(void* args) {
     bzero(sendBuffer,256);
 
     n = read(sock,buffer,255);
-    buffer[n-1] = '\0';
-    if (n < 0) {
-      break;
-      error("ERROR reading from socket");
-    }
-    std::cout << n << std::endl;
+    // buffer[n-1] = '\0';
     // printf("Here is the message: %s\n",buffer);
-    std::string send = parseCommands(buffer, users, sessionKey);
-    n = write(sock, send.c_str(), send.length());
 
     if (n < 0) error("ERROR writing to socket");
-    if (buffer == "exit") {
+    if (buffer == "exit" || n == 0) {
       std::cout << "exiting!" << std::endl;
 	    pthread_exit(NULL);		// Ends the thread
       break;
     }
+
+    std::string send = parseCommands(buffer, users, sessionKey);
+    n = write(sock, send.c_str(), send.length());
   }
   return NULL;
 }
