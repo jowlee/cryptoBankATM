@@ -29,7 +29,7 @@ struct thread_info {    		/* Used as argument to thread_start() */
 };
 
 void closeSocket(int param) {
-	printf("\nGracefully shutting down...\n");
+	printf("\nShutting down...\n");
 	fflush(stdout);
 	close(bankSocket);
 	close(atmSocket);
@@ -43,7 +43,7 @@ void error(const char *msg){
 
 int main(int argc, char* argv[]) {
 	if(argc != 3) {
-		printf("Usage: proxy listen-port bank-connect-port\n");
+		printf("Usage: proxy <listen-port> <bank-connect-port>\n");
 		return -1;
 	}
 
@@ -155,10 +155,12 @@ void* to_server_thread(void* arg) {
       Other Team may mess with code here.
       Good Luck!
     */
+		std::cout << buffer << std::endl;
 
 		
 		n = write(bankSocket,buffer,n);
 		if (n < 0) error("ERROR writing to socket");
+
 
 		bzero(buffer,256);
 		//n = read(bankSocket,buffer,255);
@@ -250,6 +252,7 @@ void* to_client_thread(void* arg) {
       Other Team may mess with code here.
       Good Luck!
     */
+		std::cout << buffer << std::endl;
 
 		n = write(csock,buffer,n);
 		if (n < 0) error("ERROR writing to socket");

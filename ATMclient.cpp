@@ -4,6 +4,7 @@
 #include <string.h>
 #include <string>
 #include <iostream>
+#include <sstream>
 #include <cstring>
 #include <signal.h>
 #include <sys/types.h>
@@ -12,16 +13,9 @@
 #include <netdb.h>
 #include "crypto.h"
 
-#define write cwrite
-#define read cread
+// #define write cwrite
+// #define read cread
 #include "clientCommands.cpp"
-
-void closeSocket(int atmSocket) {
-	printf("Closing \n");
-	fflush(stdout);
-	close(atmSocket);
-	exit(1);
-}
 
 int main(int argc, char *argv[]){
 
@@ -52,34 +46,30 @@ int main(int argc, char *argv[]){
     return -1;
   }
 
+	// Initial message
+
+	int messageNumber = 1;
+
+	char message[256];
+	strcpy(message,  "init");
+
+	char buffer[256];
+	messageNumber = sendRecieve(atmSocket, message, buffer, messageNumber);
+
   //input loop
   bool loggedin = false;
+	std::string sessionKey;
+	std::string input;
+
+	printf("atm ~ : ");
 
   while(1){
-    printf("atm ~ : ");
 
-    char buf[80];
-    fgets(buf, 79, stdin);
-		buf[strlen(buf)-1] = '\0';	//trim off trailing newline
+		getline(std::cin, input);
     int index = 0;
-    std::string input(buf);
+		if (input.length() == 0) continue;
     std::string command = advanceCommand(input, index);
-    // std::cout << command << std::endl;
 
-
-    // Wait for user to input command
-    // int n = write(atmSocket, "123123", 16);
-    //
-    // char buffer[256];
-    // bzero(buffer,256);
-    // printf("Here is the message: %s\n",buffer);
-
-    // n = read(sock,buffer,255);
-    // if (n < 0) error("ERROR reading from socket");
-    // std::cout << "compare exit: " <<  command.length() << std::endl;
-    // std::cout << strlen(command.c_str()) << std::endl;
-
-    // std::cout << command << " " << command.compare("exit") << std::endl;
     if(command.compare("exit") == 0){
       closeSocket(atmSocket);
     }
@@ -89,14 +79,14 @@ int main(int argc, char *argv[]){
       if(command.compare("balance") == 0){
         advanceSpaces(input, index);
         std::cout << "Obtaining Balance..." << std::endl;
-        balance("test", atmSocket);
+        messageNumber = balance(sessionKey, atmSocket, messageNumber);
       }
 
       else if(command.compare("withdraw") == 0){
         advanceSpaces(input, index);
         std::string amountString = advanceCommand(input, index);
         float amount = atof(amountString.c_str());
-        std::cout << amount << std::endl;
+				messageNumber = withdraw(sessionKey, amountString, atmSocket, messageNumber);
       }
 
       else if(command.compare("transfer") == 0){
@@ -105,17 +95,25 @@ int main(int argc, char *argv[]){
         float amount = atof(amountString.c_str());
         advanceSpaces(input, index);
         std::string username = advanceCommand(input, index);
-        std::cout << username << std::endl;
+				messageNumber = transfer(sessionKey, amountString, username, atmSocket, messageNumber);
       }
 
       else if(command.compare("logout") == 0){
         advanceSpaces(input, index);
-        std::cout << "Logging Out Now..." << std::endl;
-        std::cout << "GoodBye" << std::endl;
-        exit(0);
+        loggedin = false;
+        sessionKey = "";
+
+				bzero(buffer,256);
+				bzero(message,256);
+
+				strcpy(message,  "logout");
+				messageNumber = sendRecieve(atmSocket, message, buffer, messageNumber);
+
+        std::cout << "Logging Out..." << std::endl;
+
       }
       else{
-        std::cout << "You suck man" << std::endl;
+        std::cout << "Command not found" << std::endl;
       }
     }
 
@@ -124,11 +122,18 @@ int main(int argc, char *argv[]){
       if(command.compare("login") == 0){
         advanceSpaces(input, index);
         std::string username = advanceCommand(input, index);
-        std::cout << username << std::endl;
-        std::string ans = login(username, atmSocket);
-        // break;
+				char ans[256];
+				messageNumber = login(username, atmSocket, messageNumber, ans);
+
+				if(ans != "broken"){
+					sessionKey = ans;
+					loggedin = true;
+				}
       }
     }
+
+		printf("atm ~ : ");
+
   }
 
   //cleanup

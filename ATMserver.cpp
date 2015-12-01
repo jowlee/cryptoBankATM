@@ -12,11 +12,12 @@
 #include <cstring>
 #include <pthread.h>			// For multithreading
 #include <stdint.h>
-#include <typeinfo>
+#include <sstream>
+#include <iomanip>
 #include "crypto.h"
 
-#define write cwrite
-#define read cread
+// #define write cwrite
+// #define read cread
 
 #include "serverCommands.cpp"
 
@@ -34,6 +35,8 @@ struct thread_info { 	   		/* Used as argument to thread_start() */
 
 //HashMap of usernames to a tuple of user info or user object containing {username, pin, balance}
 
+std::string advanceCommand(const std::string& line, int &index);
+void advanceSpaces(const std::string &line, int &index);
 
 void error(const char *msg);
 
@@ -87,7 +90,7 @@ int main(int argc, char *argv[]) {
           continue;
         }
         pthread_t thread;
-        thread_info args;
+        // thread_info args;
         args.sock = newsockfd;
 
         // pid = fork();
@@ -109,8 +112,12 @@ void error(const char *msg) {
 // Read input until we read a space, then for each character add it to the command string
 std::string advanceCommand(const std::string& line, int &index) {
   std::string command = "";
-  for(; line[index] != ' ' && index < line.length(); index++) {
+  if (index >= line.length()) return command;
+  for(; line[index] != ' ' && line[index] != '\0' && index < line.length(); index++) {
     command += line[index];
+  }
+  if (index != line.length()) {
+    advanceSpaces(line, index);
   }
   return command;
 }
@@ -119,88 +126,182 @@ void advanceSpaces(const std::string &line, int &index) {
   for(; line[index] == ' ' && index < line.length(); index++);
 }
 
-void *consoleThread(void *threadid) {
-	// Read in commands from cin
-	for(std::string line; getline(std::cin, line);) {
-
-		int index = 0;
-		std::string command = advanceCommand(line, index);
-    advanceSpaces(line, index);
-		std::string username = advanceCommand(line, index);
-
-		//deposit ​[username] [amount] ­ Increase <username>’s ​balance by <amount>
-		if(command.compare("deposit") == 0) {
-      advanceSpaces(line, index);
-			std::string amount = advanceCommand(line, index);
-
-			// Execute deposit command
-			deposit(&username, atol(amount.c_str()));
-		}
-		//balance​ [username] ­ Print the balance of <username>
-		else if(command.compare("balance") == 0) {
-			// Execute balance command
-			balance(&username);
-		}
-	}
-	pthread_exit(NULL);		// Ends the thread
+std::string genSessionKey(std::string username) {
+  int secret = rand() % 1000 + 1;
+  std::stringstream ss;
+  ss << std::setfill('0') << std::setw(4) << secret;
+  return username + '_' + ss.str();
 }
-
-void parseCommands(char buffer[], userDB* users, std::string& sessionKey) {
+std::string parseCommands(char buffer[], userDB* users, std::string& sessionKey, int& sentNumber) {
   int index = 0;
+  bool loggedIn = false;
   std::string input(buffer);
+  userInfo *thisUser;
+  std::string sendStr;
+
+  int cliNumber = atoi(advanceCommand(input, index).c_str());
+  sentNumber ++;
+  if (cliNumber != sentNumber) {
+    return "not the message I was expecting";
+  }
+  sentNumber ++;
+
+
+  if (sessionKey.length() != 0) {
+    std::string cliSeshKey = advanceCommand(input, index);
+
+    int pos = sessionKey.find('_');
+    std::string someUser = sessionKey.substr(0, pos);
+    thisUser = users->findUser(someUser);
+    if (thisUser == NULL) {
+      return "session Key has been tampered with";
+    }
+    else {
+      loggedIn = thisUser->isLoggedIn();
+
+    }
+
+
+    // checks if user is trying to logout
+    if (cliSeshKey.compare("logout") == 0 && loggedIn) {
+      sessionKey = "";
+      // std::cout << "atm connection ~ : " <<  "user logged out" << std::endl;
+      thisUser->logout();
+      return "logged_out";
+    }
+    // checks to see if client's session key equals clients session key
+    if (sessionKey.compare(cliSeshKey) != 0) return "session key has been tampered with";
+  }
+  // std::cout << "session key: " << sessionKey << std::endl;
+
   std::string command = advanceCommand(input, index);
-  advanceSpaces(input, index);
+  // std::cout << "balance: " << (command.compare("balance") == 0) << " " << loggedIn << std::endl;
   if (command.compare("login") == 0) {
     std::string username = advanceCommand(input, index);
-    advanceSpaces(input, index);
     std::string pin = advanceCommand(input, index);
     if (users->loginUser(username, pin)) {
-      std::cout << "logged in!" << std::endl;
-      sessionKey = username;
+      // std::cout << username << " logged in!" << std::endl;
+      sessionKey = genSessionKey(username);
+      sendStr = "y " + sessionKey;
     }
-  } else if (command.compare("balance") == 0) {
-
-  } else if (command.compare("withdraw") == 0) {
-
-  } else if (command.compare("transfer") == 0) {
-
-  } else if (command.compare("logout") == 0) {
-
-  } else {
-    std::cout << "error! bad command!" << std::endl;
+    else {
+      sendStr = "n";
+    }
   }
-
+  else if (command.compare("balance") == 0 && loggedIn) {
+    sendStr = thisUser->getBalance();
+  }
+  else if (command.compare("withdraw") == 0 && loggedIn) {
+    std::string amount = advanceCommand(input, index);
+    std::string takenOut = thisUser->withdraw(amount);
+    sendStr = "withdrew";
+  }
+  else if (command.compare("transfer") == 0 && loggedIn) {
+    std::string amount = advanceCommand(input, index);
+    std::string sendingTo = advanceCommand(input, index);
+    users->transfer(thisUser->getName(), sendingTo, amount);
+    sendStr = "transfered";
+  }
+  else if (command.compare("check") == 0 && loggedIn) {
+    std::string name = advanceCommand(input, index);
+    bool exists = users->userExists(name);
+    if (exists) sendStr = "y";
+    else sendStr = "n";
+  }
+  else if (command.compare("init") == 0) {
+    sendStr = "connected to bank";
+  }
+  else {
+    std::cout << "bad command" << std::endl;
+    sendStr = "error! bad command!";
+  }
+  std::stringstream ss;
+  ss << sentNumber;
+  return ss.str() + " " + sendStr;
 }
 
 void* socketThread(void* args) {
+  std::cout << std::endl;
   struct thread_info *tinfo;
   tinfo = (thread_info *) args;
   int sock = tinfo->sock;
   userDB *users = tinfo->users;
   std::string sessionKey;
+  int sentNumber = 0;
 
   bool logginIn = false;
 
   while (1) {
     int n;
     char buffer[256];
+    char sendBuffer[256];
     bzero(buffer,256);
+    bzero(sendBuffer,256);
 
     n = read(sock,buffer,255);
-    buffer[n-1] = '\0';
-    if (n < 0) error("ERROR reading from socket");
-    printf("Here is the message: %s\n",buffer);
-    parseCommands(buffer, users, sessionKey);
 
-    n = write(sock,"I got your message\0",19);
-	//n = 0;
-	
     if (n < 0) error("ERROR writing to socket");
-    if (buffer == "exit") {
-      std::cout << "exiting!" << std::endl;
-	    pthread_exit(NULL);		// Ends the thread
+    if (n == 0) {
+      std::cout << "atm connection ~ : " <<  "socket# " << sock << " disconnected" << std::endl;
+      if (sessionKey.length() != 0) {
+        int pos = sessionKey.find('_');
+        userInfo *thisUser;
+        std::string someUser = sessionKey.substr(0, pos);
+        thisUser = users->findUser(someUser);
+        thisUser->logout();
+      }
+      break;
+    }
+    if (std::string(buffer).compare("init") == 0) {
+      std::cout << "atm connection ~ : ";
+      std::cout << "socket# " << sock << " connected" << std::endl;
+    } else {
+      std::cout << "atm connection ~ : ";
+      std::cout << buffer << std::endl;
+    }
+    std::string send = parseCommands(buffer, users, sessionKey, sentNumber);
+    n = write(sock, send.c_str(), send.length());
+    if (send.compare("not the message I was expecting") == 0) {
+      close(sock);
       break;
     }
   }
+  pthread_exit(NULL);		// Ends the thread
   return NULL;
+}
+
+void *consoleThread(void *args) {
+  struct thread_info *tinfo;
+  tinfo = (thread_info *) args;
+  userDB *users = tinfo->users;
+  // string that is printed to the console
+  std::string sendStr;
+
+  std::cout << ("bank ~ : ");
+	for(std::string line; getline(std::cin, line);) {
+
+		int index = 0;
+		std::string command = advanceCommand(line, index);
+		std::string username = advanceCommand(line, index);
+    if (command.compare("balance") != 0 && command.compare("deposit") != 0) {
+      sendStr = "Bank Commands: [deposit|balance] [username] <amount>";
+    }
+    else if (!users->userExists(username)) {
+      sendStr = "user \"" + username + "\" does not exist";
+    }
+		else if(command.compare("deposit") == 0) {
+		  //deposit ​[username] [amount] ­ Increase <username>’s ​balance by <amount>
+			std::string amount = advanceCommand(line, index);
+
+			sendStr = "deposited " + amount;
+      deposit(username, amount, users);
+		}
+		else if(command.compare("balance") == 0) {
+		  //balance​ [username] ­ Print the balance of <username>
+			sendStr = balance(username, users);
+		}
+    std::cout << sendStr << std::endl;
+    std::cout << ("bank ~ : ");
+  }
+	pthread_exit(NULL);		// Ends the thread
 }
