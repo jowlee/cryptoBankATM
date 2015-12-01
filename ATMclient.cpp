@@ -53,7 +53,7 @@ int main(int argc, char *argv[]){
 	char mess[256];
 	strcpy(mess,"nOsEsSiOnKeY ");
 	strcat(mess, "init");
-	int n = write(atmSocket, mess, 4);
+	int n = write(atmSocket, mess, strlen(mess)+1);
 	if (n < 0) error("ERROR something is wrong");
 	char buf[256];
 	n = read(atmSocket,buf,255);
