@@ -193,7 +193,8 @@ void* socketThread(void* args) {
     parseCommands(buffer, users, sessionKey);
 
     n = write(sock,"I got your message\0",19);
-
+	//n = 0;
+	
     if (n < 0) error("ERROR writing to socket");
     if (buffer == "exit") {
       std::cout << "exiting!" << std::endl;

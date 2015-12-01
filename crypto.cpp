@@ -30,6 +30,7 @@ char* sha_256(char* buf);
 
 // send command
 ssize_t cwrite(int fd, const void *buf, size_t len) {
+	std::cout << "Sending a message" << std::endl;
 	//long indexOfPad = random integer from 0 to size of OTP in bytes
 	unsigned long long* indexOfPad = new unsigned long long;
 	*indexOfPad = unsignedLongLongRand();
@@ -53,7 +54,7 @@ ssize_t cwrite(int fd, const void *buf, size_t len) {
 	n = read(fd, buffer, PACKET_LENGTH);
 	if (n < 0) {
 		//error
-		n = write(fd, "NO", PACKET_LENGTH);
+		n = write(fd, "NO", 2);
 		if (n < 0) {
 			return -1;
 		}
@@ -61,7 +62,7 @@ ssize_t cwrite(int fd, const void *buf, size_t len) {
 	}
 	else if (n == 0) {
 		//error - no message
-		n = write(fd, "NO", PACKET_LENGTH);
+		n = write(fd, "NO", 2);
 		if (n < 0) {
 			return -1;
 		}
@@ -72,7 +73,7 @@ ssize_t cwrite(int fd, const void *buf, size_t len) {
 		return -1;
 	}
 	//send ok to reciever
-	n = write(fd, "OK", PACKET_LENGTH);
+	n = write(fd, "OK", 2);
 	if (n < 0) {
 		return -1;
 	}
@@ -81,28 +82,67 @@ ssize_t cwrite(int fd, const void *buf, size_t len) {
 	//for(int bufferIndex = 0; bufferIndex < len; bufferIndex += PACKET_DATA_LENGTH) {
 	for(int bufferIndex = 0; bufferIndex < len; bufferIndex += PACKET_DATA_LENGTH) {
 		//char* toSend = buf[bufferIndex];
-		char* toSend = &((char*)buf)[bufferIndex];
+		
+		char* toSend = new char[PACKET_DATA_LENGTH];
+		bzero(toSend, PACKET_DATA_LENGTH);
+		for(int i = 0; i < PACKET_DATA_LENGTH && bufferIndex + i < len; i++) {
+			toSend[i] = ((char*)buf)[bufferIndex + i];
+		}
+		
+		std::cout << "toSend: ";
+		for(int i = 0; i < PACKET_DATA_LENGTH; i++) std::cout << toSend[i];
+		std::cout << std::endl;
+		
 		//char* key = OTP(&indexOfPad, PACKET_DATA_LENGTH + PACKET_CHECKSUM_LENGTH);
 		char* key = OTP(indexOfPad, PACKET_LENGTH);
+		std::cout << "key: ";
+		for(int i = 0; i < PACKET_LENGTH; i++) std::cout << key[i];
+		std::cout << std::endl;
+		
 		//char* mac = sha-256(concat(toSend, key));
 		char* mac = sha_256(concat(toSend, key, PACKET_DATA_LENGTH, PACKET_CHECKSUM_LENGTH));
+		delete[] key;
+		//std::cout << "mac: " << mac << std::endl;
+		std::cout << "mac: ";
+		for(int i = 0; i < PACKET_CHECKSUM_LENGTH; i++) std::cout << mac[i];
+		std::cout << std::endl;
+		
 		//char* message = concat(toSend, mac);
 		char* message = concat(toSend, mac, PACKET_DATA_LENGTH, PACKET_CHECKSUM_LENGTH);
+		
+		//delete[] mac;
+		std::cout << "message: ";
+		for(int i = 0; i < PACKET_LENGTH; i++) std::cout << message[i];
+		std::cout << std::endl;
+		
 		//char* pad = OTP(&indexOfPad, PACKET_DATA_LENGTH + PACKET_CHECKSUM_LENGTH);
 		char* pad = OTP(indexOfPad, PACKET_LENGTH);
+		
+		std::cout << "pad: ";
+		for(int i = 0; i < PACKET_LENGTH; i++) std::cout << pad[i];
+		std::cout << std::endl;
+		
 		//send xor(message, pad) to reciever 
-		n = write(fd, xorCharArray(message, pad, PACKET_LENGTH), PACKET_LENGTH);
+		std::cout << "Sending encrypted message" << std::endl;
+		char* enc = xorCharArray(message, pad, PACKET_LENGTH);
+		delete[] message;
+		delete[] pad;
+		n = write(fd, enc, PACKET_LENGTH);
+		delete[] enc;
 		if (n < 0) {
-			delete[] key;
 			return -1;
 		}
-		delete[] key;
+		std::cout << "Sent encrypted message" << std::endl;
 		//3
 	}
+	std::cout << "Done sending encrypted message" << std::endl;
+	n = write(fd, "DONE", 4);
+	return len;
 }
 
 // recv command
 ssize_t cread(int fd, void *buf, size_t len) {
+	std::cout << "Recieving a message" << std::endl;
 	//1
 	//wait for nonce from sender
 	char buffer[PACKET_LENGTH];
@@ -116,24 +156,51 @@ ssize_t cread(int fd, void *buf, size_t len) {
 		//error - no message
 		return -1;
 	}
+	
+	std::cout << "buffer: ";
+	for(int i = 0; i < PACKET_LENGTH; i++) std::cout << (int)buffer[i];
+	std::cout << std::endl;
+		
 	//long indexOfPad;
 	//indexOfPad = charArrayToLong(message recieved from sender);
 	unsigned long long indexOfPad = charArrayToLong(buffer, PACKET_LENGTH);
+	std::cout << "indexOfPad: " << indexOfPad << std::endl;
+	
 	//byte* message = OTP(&indexOfPad, PACKET_DATA_LENGTH + PACKET_CHECKSUM_LENGTH);
 	char* message = OTP(&indexOfPad, PACKET_LENGTH);
+	
+	std::cout << "message: ";
+	for(int i = 0; i < PACKET_LENGTH; i++) std::cout << message[i];
+	std::cout << std::endl;
+	
 	//byte* pad = OTP(&indexOfPad, PACKET_DATA_LENGTH + PACKET_CHECKSUM_LENGTH);
 	char* pad = OTP(&indexOfPad, PACKET_LENGTH);
+	
+	std::cout << "pad: ";
+	for(int i = 0; i < PACKET_LENGTH; i++) std::cout << pad[i];
+	std::cout << std::endl;
+	
 	//byte* reply = xor(message, pad);
 	char* reply = xorCharArray(message, pad, PACKET_LENGTH);
+	
+	std::cout << "reply: ";
+	for(int i = 0; i < PACKET_LENGTH; i++) std::cout << reply[i];
+	std::cout << std::endl;
+	
+	std::cout << "Sending reply" << std::endl;
 	//send reply to sender
 	n = write(fd, reply, PACKET_LENGTH);
+	std::cout << "Sent reply" << std::endl;
 	if (n < 0) {
 		return -1;
 	}
 	//2
 	//2.1
 	//recieve ok, if not retry, abort, ignore?
-	n = read(fd, buffer, PACKET_LENGTH);
+	std::cout << "Waiting for confirmation" << std::endl;
+	n = read(fd, buffer, 2);
+	buffer[2] = '\0';
+	std::cout << "Got confirmation: " << buffer << std::endl;
 	if (n < 0) {
 		//error
 		return -1;
@@ -142,44 +209,92 @@ ssize_t cread(int fd, void *buf, size_t len) {
 		//error - no message
 		return -1;
 	}
-	else if(std::strcmp(buffer, "OK") != 0) {
+	else if(buffer[0] != 'O' || buffer[1] != 'K') {
 		//error - not ok
+		std::cout << "Not OK: " << (buffer[0] == 'O') << " " << (buffer[1] == 'K') << std::endl;
 		return -1;
 	}
 	//2.2
 	//int amount_recv = 0;
 	int amount_recv = 0;
 	//while(more to recieve or amount_recv + PACKET_DATA_LENGTH < len) {
+	std::cout << "Recieving data" << std::endl;
 	while(amount_recv + PACKET_DATA_LENGTH < len) {
 		//3
 		//byte data[PACKET_DATA_LENGTH + PACKET_CHECKSUM_LENGTH] = message recieved from sender
 		char data[PACKET_LENGTH];
-		amount_recv += read(fd, data, PACKET_LENGTH);
+		bzero(data, PACKET_LENGTH);
+		std::cout << "Waiting for data" << std::endl;
+		n = read(fd, data, PACKET_LENGTH);
+		if (n < 0) {
+			//error
+			return -1;
+		}
+		else if (n == 0) {
+			//done - no message
+			return amount_recv;
+		}
+		else if (data[0] == 'D' && data[1] == 'O' && data[2] == 'N' && data[3] == 'E') {
+			return amount_recv;
+		}
+		amount_recv += n;
+		std::cout << "Got data" << std::endl;
 		//byte* key = OTP(&indexOfPad, PACKET_DATA_LENGTH + PACKET_CHECKSUM_LENGTH);
 		char* key = OTP(&indexOfPad, PACKET_LENGTH);
+		
+		std::cout << "key: ";
+		for(int i = 0; i < PACKET_LENGTH; i++) std::cout << key[i];
+		std::cout << std::endl;
+	
 		//pad = OTP(&indexOfPad, PACKET_DATA_LENGTH + PACKET_CHECKSUM_LENGTH);
 		char* pad = OTP(&indexOfPad, PACKET_LENGTH);
+		
+		std::cout << "pad: ";
+		for(int i = 0; i < PACKET_LENGTH; i++) std::cout << pad[i];
+		std::cout << std::endl;
+		
 		//byte* messsage = xor(data, pad);
 		char* message = xorCharArray(data, pad, PACKET_LENGTH);
+		
+		std::cout << "message: ";
+		for(int i = 0; i < PACKET_LENGTH; i++) std::cout << message[i];
+		std::cout << std::endl;
+		
 		//byte* checksum = data + PACKET_DATA_LENGTH;     checksum is last part after the data
 		char* checksum = message + PACKET_DATA_LENGTH;
+		
+		std::cout << "checksum: ";
+		for(int i = 0; i < PACKET_CHECKSUM_LENGTH; i++) std::cout << checksum[i];
+		std::cout << std::endl;
+		
 		//byte* mac = sha-256(concat(messsage, key));     recompute mac
 		//std::string msgStr(message);
 		//std::string keyStr(key);
 		char* mac = sha_256(concat(message, key, PACKET_DATA_LENGTH, PACKET_CHECKSUM_LENGTH));
-		if(!charArrayEquals(checksum, mac, PACKET_LENGTH)) {
+		std::cout << "mac: ";
+		for(int i = 0; i < PACKET_CHECKSUM_LENGTH; i++) std::cout << mac[i];
+		std::cout << std::endl;
+		
+		if(!charArrayEquals(checksum, mac, PACKET_CHECKSUM_LENGTH)) {
 			//checksum != mac
+			std::cout << "Invalid checksum" << std::endl;
 			delete[] mac;
 			return -1;
 		}
 		
 		//copy message into buffer
-		memcpy(buf, message, PACKET_DATA_LENGTH);
+		std::cout << "message: " << std::flush;
+		for(int i = 0; i < PACKET_DATA_LENGTH; i++) {
+			((char*)buf)[i] = message[i];
+			std::cout << message[i] << std::flush;
+		}
+		std::cout << std::endl;
+		//memcpy(buf, message, PACKET_DATA_LENGTH);
 		//for(int i = 0; i < PACKET_DATA_LENGTH; i++) {
 		//	buf[i] = message[i];
 		//}
 		buf += PACKET_DATA_LENGTH;
-		delete[] mac;
+		
 	}
 	return amount_recv;	
 }
@@ -254,9 +369,6 @@ char* concat(const char* left, const char* right, int sizel, int sizer) {
 		result[sizel + i] = right[i];
 	}
 	return result;
-	//std::string msgStr(left);
-	//std::string keyStr(right);
-	//return &(left + right)[0];
 }
 
 char* sha_256(char* buf) {
