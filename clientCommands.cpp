@@ -5,8 +5,8 @@
 #include <sys/socket.h>
 #include "crypto.h"
 
-#define write cwrite
-#define read cread
+// #define write cwrite
+// #define read cread
 
 
 

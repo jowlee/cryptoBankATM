@@ -13,8 +13,8 @@
 #include <netdb.h>
 #include "crypto.h"
 
-#define write cwrite
-#define read cread
+// #define write cwrite
+// #define read cread
 #include "clientCommands.cpp"
 
 int main(int argc, char *argv[]){

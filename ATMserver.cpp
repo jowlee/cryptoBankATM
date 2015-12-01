@@ -16,8 +16,8 @@
 #include <iomanip>
 #include "crypto.h"
 
-#define write cwrite
-#define read cread
+// #define write cwrite
+// #define read cread
 
 #include "serverCommands.cpp"
 
@@ -259,7 +259,8 @@ void* socketThread(void* args) {
       std::cout << buffer << std::endl;
     }
     std::string send = parseCommands(buffer, users, sessionKey, sentNumber);
-    if (send.compare("not the message I was expecting")) {
+    if (send.compare("not the message I was expecting") == 0) {
+      std::cout << "````error````" << std::endl;
       close(sock);
       break;
     }
