@@ -38,7 +38,10 @@ class userInfo {
       }
       return false;
     }
-    
+    bool withdraw(std::string amo) {
+      int amount = atoi(amo.c_str());
+      balance -= amount;
+    }
 };
 
 class userDB {
