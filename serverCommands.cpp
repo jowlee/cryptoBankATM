@@ -1,5 +1,17 @@
 #include <vector>
 
+class userInfo;
+class userDB;
+
+void deposit(const std::string user, const std::string amount, userDB* users);
+void balance(const std::string* user);
+
+void login(const std::string* user, int pin);
+void balance(const std::string* user);
+void amount(const std::string* user, int amount);
+void transfer(const std::string* user, int amount, const std::string* otherUser);
+void logout(std::string user);
+
 
 class userInfo {
   private:
@@ -44,6 +56,10 @@ class userInfo {
       ss << amount;
       return ss.str();
     }
+    void deposit(std::string amo) {
+      int amount = atoi(amo.c_str());
+      balance += amount;
+    }
 };
 
 class userDB {
@@ -60,11 +76,25 @@ class userDB {
           return &users[i];
         }
       }
+      return NULL;
     }
     bool loginUser(std::string name, std::string pin) {
       userInfo *user;
       user = this->findUser(name);
       return user->Login(pin);
+    }
+    void transfer(std::string transferer, std::string transferee, std::string amount) {
+      userInfo* from = this->findUser(transferer);
+      userInfo* to = this->findUser(transferee);
+      from->withdraw(amount);
+      to->deposit(amount);
+      // deposit(transferee, amount, this);
+    }
+    bool userExists(std::string name) {
+      if (this->findUser(name)) {
+        return true;
+      }
+      return false;
     }
 };
 void init_bank(userDB* users) {
@@ -76,16 +106,8 @@ void init_bank(userDB* users) {
   users->addUser(e);
 }
 
-void deposit(const std::string* user, unsigned long amount);
-void balance(const std::string* user);
 
-void login(const std::string* user, int pin);
-void balance(const std::string* user);
-void amount(const std::string* user, int amount);
-void transfer(const std::string* user, int amount, const std::string* otherUser);
-void logout(std::string user);
-
-void deposit(const std::string* user, unsigned long amount) {
+void deposit(const std::string user, const std::string amount, userDB* users) {
   std::cout << "dtest" << std::endl;
 }
 

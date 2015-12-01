@@ -132,7 +132,7 @@ void *consoleThread(void *threadid) {
 			std::string amount = advanceCommand(line, index);
 
 			// Execute deposit command
-			deposit(&username, atol(amount.c_str()));
+			// deposit(username, amount);
 		}
 		//balance​ [username] ­ Print the balance of <username>
 		else if(command.compare("balance") == 0) {
@@ -170,7 +170,7 @@ std::string parseCommands(char buffer[], userDB* users, std::string& sessionKey)
 
   std::string command = advanceCommand(input, index);
   // std::cout << "balance: " << (command.compare("balance") == 0) << " " << loggedIn << std::endl;
-
+std::cout << command << std::endl;
   advanceSpaces(input, index);
   if (command.compare("login") == 0) {
     std::string username = advanceCommand(input, index);
@@ -180,22 +180,40 @@ std::string parseCommands(char buffer[], userDB* users, std::string& sessionKey)
       std::cout << username << " logged in!" << std::endl;
       sessionKey = genSessionKey(username);
       sendStr = "y " + sessionKey;
-    } else {
+    }
+    else {
       sendStr = "n";
     }
-  } else if (command.compare("balance") == 0 && loggedIn) {
+  }
+  else if (command.compare("balance") == 0 && loggedIn) {
     sendStr = thisUser->getBalance();
-  } else if (command.compare("withdraw") == 0 && loggedIn) {
+  }
+  else if (command.compare("withdraw") == 0 && loggedIn) {
     std::string amount = advanceCommand(input, index);
     std::string takenOut = thisUser->withdraw(amount);
     sendStr = "withdrew";
-  } else if (command.compare("transfer") == 0 && loggedIn) {
-    
-  } else if (command.compare("logout") == 0 && loggedIn) {
+  }
+  else if (command.compare("transfer") == 0 && loggedIn) {
+    std::string amount = advanceCommand(input, index);
+    advanceSpaces(input, index);
+    std::string sendingTo = advanceCommand(input, index);
+    advanceSpaces(input, index);
+    std::cout << "transFRAT" << std::endl;
+    users->transfer(thisUser->getName(), sendingTo, amount);
+  }
+  else if (command.compare("logout") == 0 && loggedIn) {
 
-  } else if (command.compare("init") == 0) {
+  }
+  else if (command.compare("check") == 0 && loggedIn) {
+    std::string name = advanceCommand(input, index);
+    bool exists = users->userExists(name);
+    if (exists) sendStr = "y";
+    else sendStr = "n";
+  }
+  else if (command.compare("init") == 0) {
     sendStr = "connected to bank";
-  } else {
+  }
+  else {
     std::cout << "bad command" << std::endl;
     sendStr = "error! bad command!";
   }
