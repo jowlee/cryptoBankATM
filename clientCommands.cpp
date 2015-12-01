@@ -91,8 +91,8 @@ std::string login(const std::string username, int socketNo){
 void balance(const std::string sessionKey, int socketNo){
 
   char message[256];
-  strcpy (message,"balance ");
-  strcat(message, sessionKey.c_str());
+  strcpy (message, sessionKey.c_str());
+  strcat(message, " balance");
 
   int n = write(socketNo, message, strlen(message)+1);
   if (n < 0) error("ERROR writing to socket");
