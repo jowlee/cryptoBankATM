@@ -59,7 +59,8 @@ std::string login(const std::string username, int socketNo){
 
   char message[256];
 
-  strcpy (message,"login ");
+  strcpy (message,"nOsEsSiOnKeY ");
+  strcat(message, " login ");
   strcat(message, username.c_str());
   strcat(message, " ");
   strcat(message, password.c_str());

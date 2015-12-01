@@ -49,7 +49,11 @@ int main(int argc, char *argv[]){
   }
 
 	// Initial message
-	int n = write(atmSocket, "init", 4);
+
+	char mess[256];
+	strcpy(mess,"nOsEsSiOnKeY ");
+	strcat(mess, " init ");
+	int n = write(atmSocket, mess, 4);
 	if (n < 0) error("ERROR something is wrong");
 	char buf[256];
 	n = read(atmSocket,buf,255);
