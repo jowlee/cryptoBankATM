@@ -152,12 +152,19 @@ std::string genSessionKey(std::string username) {
 }
 std::string parseCommands(char buffer[], userDB* users, std::string& sessionKey) {
   int index = 0;
+  bool loggedIn = false;
   std::string input(buffer);
   std::string sendStr;
+
   if (sessionKey.length() != 0) {
+    // should check to see if client's session key equals clients session key
+    std::string seshKey = advanceCommand(input, index);
+    std::cout << seshKey << std::endl;
+    advanceSpaces(input, index);
     int pos = sessionKey.find('_');
     std::string someUser = sessionKey.substr(0, pos);
     std::cout << someUser << std::endl;
+    bool loggedIn = true;
   }
 
   std::string command = advanceCommand(input, index);
@@ -173,7 +180,7 @@ std::string parseCommands(char buffer[], userDB* users, std::string& sessionKey)
     } else {
       sendStr = "n";
     }
-  } else if (command.compare("balance") == 0) {
+  } else if (command.compare("balance") == 0 && loggedIn) {
 
   } else if (command.compare("withdraw") == 0) {
 
@@ -184,6 +191,7 @@ std::string parseCommands(char buffer[], userDB* users, std::string& sessionKey)
   } else if (command.compare("init") == 0) {
     sendStr = "connected to bank";
   } else {
+    std::cout << "bad command" << std::endl;
     sendStr = "error! bad command!";
   }
   return sendStr;
