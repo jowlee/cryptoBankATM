@@ -15,6 +15,7 @@
 #include <string.h>
 #include <signal.h>
 #include <errno.h>
+#include <iostream>
 
 void* client_thread(void* arg);
 int bankSocket; //Global FDs for network sockets
@@ -154,10 +155,12 @@ void* client_thread(void* arg) {
       Other Team may mess with code here.
       Good Luck!
     */
+		std::cout << buffer << std::endl;
 
 
 		n = write(bankSocket,buffer,255);
 		if (n < 0) error("ERROR writing to socket");
+
 
 		bzero(buffer,256);
 	  n = read(bankSocket,buffer,255);
@@ -167,6 +170,7 @@ void* client_thread(void* arg) {
       Other Team may mess with code here.
       Good Luck!
     */
+		std::cout << buffer << std::endl;
 
 		n = write(csock,buffer,255);
 		if (n < 0) error("ERROR writing to socket");

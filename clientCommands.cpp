@@ -36,25 +36,25 @@ std::string login(const std::string username, int socketNo){
   strcat(cardName, ".card");
 
   std::ifstream inFile( cardName);
-  std::cout << "Opening " << cardName << std::endl;
 
   std::string str;
   if(! inFile){
     std::cout << "Broken... Couldn't open file" << std::endl;
+    return "broken";
   }
 
   if(!std::getline(inFile, str)){
     std::cout << "Broken..." << std::endl;
+    return "broken";
   }
 
   std::string password;
-
   std::cout << "Password : ";
   std::cin >> password;
-  std::cout << password << std::endl;
 
   if(!validPin(password)){
     std::cout << "Error Incorrect Password" << std::endl;
+    return "broken";
   }
 
   char message[256];
@@ -71,19 +71,14 @@ std::string login(const std::string username, int socketNo){
   bzero(buffer,256);
   n = read(socketNo,buffer,255);
   if (n < 0) error("ERROR reading from socket");
-  std::cout << buffer << std::endl;
 
   std::string response(buffer);
   int index = 0;
   std::string works = advanceCommand(response, index);
 
-  std::cout << "works is " << works.length() << works << std::endl;
-
   if(works.compare("y") == 0){
     advanceSpaces(response, index);
     std::string code = advanceCommand(response, index);
-    std::cout << "code " << code << std::endl;
-
     return code;
   }
   else{
@@ -94,14 +89,19 @@ std::string login(const std::string username, int socketNo){
 }
 
 void balance(const std::string sessionKey, int socketNo){
-  int n = write(socketNo, "balance", 16);
+
+  char message[256];
+  strcpy (message,"balance ");
+  strcat(message, sessionKey.c_str());
+
+  int n = write(socketNo, message, strlen(message)+1);
   if (n < 0) error("ERROR writing to socket");
 
   char buffer[256];
   bzero(buffer,256);
   n = read(socketNo,buffer,255);
   if (n < 0) error("ERROR reading from socket");
-  std:: cout << buffer << std::endl;
+  std::cout << "balance is " << buffer << std::endl;
 }
 
 void withdraw(const std::string sessionKey, std::string amount, int socketNo){

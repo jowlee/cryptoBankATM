@@ -51,36 +51,28 @@ int main(int argc, char *argv[]){
 	// Initial message
 	int n = write(atmSocket, "init", 4);
 	if (n < 0) error("ERROR something is wrong");
-
+	char buf[256];
+	n = read(atmSocket,buf,255);
+  if (n < 0) error("ERROR reading from socket");
   //input loop
   bool loggedin = false;
 	std::string sessionKey;
+	std::string input;
+
+	printf("atm ~ : ");
 
   while(1){
-    printf("atm ~ : ");
 
-    char buf[80];
-    fgets(buf, 79, stdin);
-		buf[strlen(buf)-1] = '\0';	//trim off trailing newline
+		// std::cout << std::endl;
+		getline(std::cin, input);
+
+    // fgets(buf, 255, stdin);
+		// buf[strlen(buf)-1] = '\0';	//trim off trailing newline
+    // std::string input(buf);
     int index = 0;
-    std::string input(buf);
+		if (input.length() == 0) continue;
     std::string command = advanceCommand(input, index);
-    // std::cout << command << std::endl;
 
-
-    // Wait for user to input command
-    // int n = write(atmSocket, "123123", 16);
-    //
-    // char buffer[256];
-    // bzero(buffer,256);
-    // printf("Here is the message: %s\n",buffer);
-
-    // n = read(sock,buffer,255);
-    // if (n < 0) error("ERROR reading from socket");
-    // std::cout << "compare exit: " <<  command.length() << std::endl;
-    // std::cout << strlen(command.c_str()) << std::endl;
-
-    // std::cout << command << " " << command.compare("exit") << std::endl;
     if(command.compare("exit") == 0){
       closeSocket(atmSocket);
     }
@@ -90,7 +82,7 @@ int main(int argc, char *argv[]){
       if(command.compare("balance") == 0){
         advanceSpaces(input, index);
         std::cout << "Obtaining Balance..." << std::endl;
-        balance("test", atmSocket);
+        balance(sessionKey, atmSocket);
       }
 
       else if(command.compare("withdraw") == 0){
@@ -111,8 +103,8 @@ int main(int argc, char *argv[]){
 
       else if(command.compare("logout") == 0){
         advanceSpaces(input, index);
-        std::cout << "Logging Out Now..." << std::endl;
-        std::cout << "GoodBye" << std::endl;
+				closeSocket(atmSocket);
+        std::cout << "Logging Out..." << std::endl;
         exit(0);
       }
       else{
@@ -133,6 +125,9 @@ int main(int argc, char *argv[]){
 				}
       }
     }
+
+		printf("atm ~ : ");
+
   }
 
   //cleanup
