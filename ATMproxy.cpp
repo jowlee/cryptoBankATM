@@ -27,7 +27,7 @@ struct thread_info {    		/* Used as argument to thread_start() */
 };
 
 void closeSocket(int param) {
-	printf("\nGracefully shutting down...\n");
+	printf("\nShutting down...\n");
 	fflush(stdout);
 	close(bankSocket);
 	close(atmSocket);
@@ -41,7 +41,7 @@ void error(const char *msg){
 
 int main(int argc, char* argv[]) {
 	if(argc != 3) {
-		printf("Usage: proxy listen-port bank-connect-port\n");
+		printf("Usage: proxy <listen-port> <bank-connect-port>\n");
 		return -1;
 	}
 
