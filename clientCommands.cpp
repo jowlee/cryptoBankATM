@@ -18,9 +18,9 @@ bool validPin(std::string pin){
 bool checkGood(std::string response){
   if(response.compare("error! bad command!") == 0){
     std::cout << "didn't work" << std::endl;
-    return false;
+    return true;
   }
-  else return true;
+  else return false;
 }
 
 // Read input until we read a space, then for each character add it to the command string
@@ -176,7 +176,6 @@ void transfer(const std::string sessionKey, std::string amount, std::string user
   if(checkGood(std::string(buffer))){
     return;
   }
-  std:: cout << "balance is " << buffer << std::endl;
 
   float balance = atof(buffer);
   float amountf = atof(amount.c_str());
@@ -191,7 +190,6 @@ void transfer(const std::string sessionKey, std::string amount, std::string user
     strcat(buffer, username.c_str());
     int n = write(socketNo, buffer, 16);
     if (n < 0) error("ERROR writing to socket");
-
 
     bzero(buffer,256);
     n = read(socketNo,buffer,255);
