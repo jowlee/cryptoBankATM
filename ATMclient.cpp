@@ -60,11 +60,23 @@ int main(int argc, char *argv[]){
     int index = 0;
     std::string input(buf);
     std::string command = advanceCommand(input, index);
-    std::cout << command << std::endl;
+    // std::cout << command << std::endl;
 
 
+    // Wait for user to input command
+    // int n = write(atmSocket, "123123", 16);
+    //
+    // char buffer[256];
+    // bzero(buffer,256);
+    // printf("Here is the message: %s\n",buffer);
 
-    if(command == "exit"){
+    // n = read(sock,buffer,255);
+    // if (n < 0) error("ERROR reading from socket");
+    // std::cout << "compare exit: " <<  command.length() << std::endl;
+    // std::cout << strlen(command.c_str()) << std::endl;
+
+    // std::cout << command << " " << command.compare("exit") << std::endl;
+    if(command.compare("exit") == 0){
       closeSocket(atmSocket);
     }
 

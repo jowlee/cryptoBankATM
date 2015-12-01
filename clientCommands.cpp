@@ -18,7 +18,7 @@ bool validPin(std::string pin){
 // Read input until we read a space, then for each character add it to the command string
 std::string advanceCommand(const std::string& line, int &index) {
   std::string command = "";
-  for(; line[index] != '\n' && line[index] != ' ' && index <= line.length(); index++) {
+  for(; line[index] != '\n' && line[index] != ' ' && index < line.length(); index++) {
     command += line[index];
   }
   return command;
@@ -64,7 +64,7 @@ std::string login(const std::string username, int socketNo){
   strcat(message, " ");
   strcat(message, password.c_str());
 
-  int n = write(socketNo, message, strlen(message));
+  int n = write(socketNo, message, strlen(message)+1);
   if (n < 0) error("ERROR writing to socket");
 
   char buffer[256];
