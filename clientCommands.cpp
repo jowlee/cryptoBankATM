@@ -1,12 +1,20 @@
-// basic file operations
 #include <iostream>
 #include <fstream>
+#include <sys/types.h>
+#include <sys/socket.h>
+
+
+
+void error(const char *msg){
+    perror(msg);
+    exit(0);
+}
 
 
 // Read input until we read a space, then for each character add it to the command string
 std::string advanceCommand(const std::string& line, int &index) {
   std::string command = "";
-  for(; line[index] != ' ' && index <= line.length(); index++) {
+  for(; line[index] != '\n' && line[index] != ' ' && index <= line.length(); index++) {
     command += line[index];
   }
   return command;
@@ -18,64 +26,48 @@ void advanceSpaces(const std::string &line, int &index) {
 
 
 
-void login(const std::string username){
+std::string login(const std::string username, int socketNo){
 
   std::string cardInfo;
-  std::string cardName = username + ".card";
-  std::cout << "Cardname is " << cardName << std::endl;
-  std::fstream myfile;
-  myfile.open (cardName);
-  getline(myfile,cardInfo); // Saves the line in cardInfo.
-  myfile.close();
+
+  char cardName[80];
+  strcpy (cardName,username.c_str());
+  strcat(cardName, ".card");
+
+  std::ifstream inFile( cardName);
+  std::cout << "Opening " << cardName << std::endl;
+
+  std::string str;
+  if(! inFile){
+    std::cout << "Broken... Couldn't open file" << std::endl;
+  }
+
+  if(!std::getline(inFile, str)){
+    std::cout << "Broken..." << std::endl;
+  }
+  std::cout << "Card Info" << str << std::endl;
 
   // Do checks
-
-  return "workds";
-
-
-
   // Ask for pin and check length is 6
 
-
-
+  return "workds";
 }
 
-			// 	if (card_read != AES_KEY_LENGTH){
-			// 		printf("Error while reading card. Try again\n");
-			// 		continue;
-			// 	}
-      //
-			// 	card_key.Assign((const byte*) card_contents, AES_KEY_LENGTH);
-      //
-			// 	//encrypt session key using card key
-      //
-			// 	char enc_session_key[AES_KEY_LENGTH];
-      //
-			// 	encrypt_session_key(session_key, card_key, enc_session_key);
-      //
-			// 	if (enc_session_key == NULL){
-			// 		printf("Error encrypting session key\n");
-			// 		continue;
-			// 	}
-      //
-			// 	//read 20 characters after "login username[space], (PIN)"
-			// 	//strncpy(pin,buf+7+strlen(username), 20);
-      //
-			// 	//don't bother with pin if in debug	 But now do bother
-      //
-			// 	pin = getpass("\nENTER PIN PLEASE> "); //no echo
-      //
-      //
-			// 	if(!validate_pin(pin)){
-			// 		printf("Sorry, that's not a valid pin number. Please try again.\n");
-			// 		continue;
-			// 	}
-      //
-			// 	snprintf(packet, PACKET_REMAINING(packet), "%s_login_%s_%s_%s", new_nonce, username, pin, enc_session_key);
-      //
-			// 	//E_ATM_key (nonce + login + name + pin + E_card_key(session_key))
-      //
-			// 	sendret = packet_send(packet, sock, atm_private_key, iv);
-      //
-      //
-			// }
+// Validate that pin is 6 characters long
+bool validPin(char pin[]){
+  if(strlen(pin) == 6){
+    return true;
+  }
+  return false;
+}
+
+void balance(const std::string sessionKey, int socketNo){
+  int n = write(socketNo, "balance", 16);
+  if (n < 0) error("ERROR writing to socket");
+
+  char buffer[256];
+  bzero(buffer,256);
+  n = read(socketNo,buffer,255);
+  if (n < 0) error("ERROR reading from socket");
+  std:: cout << buffer << std::endl;
+}

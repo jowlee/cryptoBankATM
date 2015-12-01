@@ -12,11 +12,6 @@
 #include <netdb.h>
 #include "clientCommands.cpp"
 
-void error(const char *msg){
-    perror(msg);
-    exit(0);
-}
-
 void closeSocket(int atmSocket) {
 	printf("Closing \n");
 	fflush(stdout);
@@ -77,13 +72,20 @@ int main(int argc, char *argv[]){
 
     // n = read(sock,buffer,255);
     // if (n < 0) error("ERROR reading from socket");
+    std::cout << "compare exit: " << command.compare("exit") << std::endl;
+    std::cout << strlen(command.c_str()) << std::endl;
+
+    if(command == "exit"){
+      closeSocket(atmSocket);
+
+    }
 
     if(loggedin){
       // Login in
       if(command.compare("balance") == 0){
         advanceSpaces(input, index);
         std::cout << "Obtaining Balance..." << std::endl;
-
+        balance("test", atmSocket);
       }
 
       else if(command.compare("withdraw") == 0){
@@ -116,12 +118,13 @@ int main(int argc, char *argv[]){
     else{
       std::cout << "Not Logged In" << std::endl;
       // Login in
+      std::cout << "compare login: " << command.compare("login") << std::endl;
       if(command.compare("login") == 0){
         advanceSpaces(input, index);
         std::string username = advanceCommand(input, index);
         std::cout << username << std::endl;
-        std::string ans = login(username);
-        break;
+        std::string ans = login(username, atmSocket);
+        // break;
       }
     }
   }

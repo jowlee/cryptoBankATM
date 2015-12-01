@@ -34,8 +34,6 @@ void balance(const std::string* user);
 
 void error(const char *msg);
 
-std::string advanceCommand(const std::string& line, int &index);
-void advanceSpaces(const std::string &line, int &index);
 void* consoleThread(void *threadid);
 void* socketThread(void* arg);
 
@@ -83,8 +81,10 @@ int main(int argc, char *argv[]) {
         pthread_t thread;
         thread_info args;
         args.sock = newsockfd;
-        std::cout << "thread" << std::endl;
+
+        // pid = fork();
         pthread_create(&thread, NULL, socketThread, &args);
+        // close(newsockfd);
         // int threadNum* ++;
     } /* end of while */
     close(newsockfd);
@@ -119,7 +119,7 @@ void advanceSpaces(const std::string &line, int &index) {
   for(; line[index] == ' ' && index <= line.length(); index++);
 }
 
-void* consoleThread(void *threadid) {
+void *consoleThread(void *threadid) {
 	// Read in commands from cin
 	for(std::string line; getline(std::cin, line);) {
 
@@ -150,21 +150,15 @@ void* socketThread(void* args) {
   tinfo = (thread_info *) args;
   int sock = tinfo->sock;
 
-  while (1) {
-    int n;
-    char buffer[256];
+  int n;
+  char buffer[256];
 
-    bzero(buffer,256);
-    n = read(sock,buffer,255);
-    if (n < 0) error("ERROR reading from socket");
-    printf("Here is the message: %s\n",buffer);
-    n = write(sock,"I got your message",18);
-    if (n < 0) error("ERROR writing to socket");
-    if (buffer == "exit") {
-      std::cout << "exiting!" << std::endl;
-	    pthread_exit(NULL);		// Ends the thread
-      break;
-    }
-  }
+  bzero(buffer,256);
+  n = read(sock,buffer,255);
+  if (n < 0) error("ERROR reading from socket");
+  printf("Here is the message: %s\n",buffer);
+  n = write(sock,"I got your message",18);
+  if (n < 0) error("ERROR writing to socket");
+	pthread_exit(NULL);		// Ends the thread
   return NULL;
 }
