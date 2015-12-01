@@ -170,7 +170,6 @@ std::string parseCommands(char buffer[], userDB* users, std::string& sessionKey)
 
   std::string command = advanceCommand(input, index);
   // std::cout << "balance: " << (command.compare("balance") == 0) << " " << loggedIn << std::endl;
-std::cout << command << std::endl;
   advanceSpaces(input, index);
   if (command.compare("login") == 0) {
     std::string username = advanceCommand(input, index);
@@ -200,6 +199,7 @@ std::cout << command << std::endl;
     advanceSpaces(input, index);
     std::cout << "transFRAT" << std::endl;
     users->transfer(thisUser->getName(), sendingTo, amount);
+    sendStr = "transfered";
   }
   else if (command.compare("logout") == 0 && loggedIn) {
 
