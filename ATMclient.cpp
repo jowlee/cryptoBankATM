@@ -48,8 +48,13 @@ int main(int argc, char *argv[]){
     return -1;
   }
 
+	// Initial message
+	int n = write(atmSocket, "init", 4);
+	if (n < 0) error("ERROR something is wrong");
+
   //input loop
   bool loggedin = false;
+	std::string sessionKey;
 
   while(1){
     printf("atm ~ : ");
@@ -122,7 +127,10 @@ int main(int argc, char *argv[]){
         std::string username = advanceCommand(input, index);
         std::cout << username << std::endl;
         std::string ans = login(username, atmSocket);
-        // break;
+				if(ans != "broken"){
+					sessionKey = ans;
+					loggedin = true;
+				}
       }
     }
   }

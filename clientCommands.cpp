@@ -18,7 +18,7 @@ bool validPin(std::string pin){
 // Read input until we read a space, then for each character add it to the command string
 std::string advanceCommand(const std::string& line, int &index) {
   std::string command = "";
-  for(; line[index] != '\n' && line[index] != ' ' && index < line.length(); index++) {
+  for(; line[index] != '\n' && line[index] != ' ' && index <= line.length(); index++) {
     command += line[index];
   }
   return command;
@@ -64,19 +64,33 @@ std::string login(const std::string username, int socketNo){
   strcat(message, " ");
   strcat(message, password.c_str());
 
-  int n = write(socketNo, message, strlen(message)+1);
+  int n = write(socketNo, message, strlen(message));
   if (n < 0) error("ERROR writing to socket");
 
   char buffer[256];
   bzero(buffer,256);
   n = read(socketNo,buffer,255);
   if (n < 0) error("ERROR reading from socket");
-  std:: cout << buffer << std::endl;
+  std::cout << buffer << std::endl;
 
-  // Do checks
-  // Ask for pin and check length is 6
+  std::string response(buffer);
+  int index = 0;
+  std::string works = advanceCommand(response, index);
 
-  return "workds";
+  std::cout << "works is " << works.length() << works << std::endl;
+
+  if(works.compare("y") == 0){
+    advanceSpaces(response, index);
+    std::string code = advanceCommand(response, index);
+    std::cout << "code " << code << std::endl;
+
+    return code;
+  }
+  else{
+    std:: cout << "Didn't work .... sorry" << std::endl;
+    return "broken";
+  }
+
 }
 
 void balance(const std::string sessionKey, int socketNo){
