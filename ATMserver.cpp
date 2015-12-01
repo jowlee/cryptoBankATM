@@ -132,12 +132,18 @@ std::string genSessionKey(std::string username) {
   ss << std::setfill('0') << std::setw(4) << secret;
   return username + '_' + ss.str();
 }
-std::string parseCommands(char buffer[], userDB* users, std::string& sessionKey) {
+std::string parseCommands(char buffer[], userDB* users, std::string& sessionKey, int sentNumber) {
   int index = 0;
   bool loggedIn = false;
   std::string input(buffer);
   userInfo *thisUser;
   std::string sendStr;
+
+  int cliNumber = atoi(advanceCommand(input, index).c_str());
+  if (cliNumber != sentNumber+1) {
+    return "not the message I was expecting";
+  }
+
 
   if (sessionKey.length() != 0) {
     std::string cliSeshKey = advanceCommand(input, index);
@@ -207,7 +213,10 @@ std::string parseCommands(char buffer[], userDB* users, std::string& sessionKey)
     std::cout << "bad command" << std::endl;
     sendStr = "error! bad command!";
   }
-  return sendStr;
+  std::stringstream ss;
+  ss << cliNumber+1;
+  std::cout << ss.str() + " " + sendStr << std::endl;
+  return ss.str() + " " + sendStr;
 }
 
 void* socketThread(void* args) {
@@ -217,6 +226,7 @@ void* socketThread(void* args) {
   int sock = tinfo->sock;
   userDB *users = tinfo->users;
   std::string sessionKey;
+  int sentNumber = 0;
 
   bool logginIn = false;
 
@@ -248,7 +258,11 @@ void* socketThread(void* args) {
       std::cout << "atm connection ~ : ";
       std::cout << buffer << std::endl;
     }
-    std::string send = parseCommands(buffer, users, sessionKey);
+    std::string send = parseCommands(buffer, users, sessionKey, sentNumber);
+    if (send.compare("not the message I was expecting")) {
+      close(sock);
+      break;
+    }
     n = write(sock, send.c_str(), send.length());
   }
   pthread_exit(NULL);		// Ends the thread
