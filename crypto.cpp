@@ -30,6 +30,7 @@ char* sha_256(char* buf);
 
 // send command
 ssize_t cwrite(int fd, const void *buf, size_t len) {
+	srand (time(NULL));
 	std::cout << "Sending a message" << std::endl;
 	//long indexOfPad = random integer from 0 to size of OTP in bytes
 	unsigned long long* indexOfPad = new unsigned long long;
@@ -133,6 +134,22 @@ ssize_t cwrite(int fd, const void *buf, size_t len) {
 			return -1;
 		}
 		std::cout << "Sent encrypted message" << std::endl;
+		n = read(fd, buffer, 2);
+		buffer[2] = '\0';
+		std::cout << "Got confirmation: " << buffer << std::endl;
+		if (n < 0) {
+			//error
+			return -1;
+		}
+		else if (n == 0) {
+			//error - no message
+			return -1;
+		}
+		else if(buffer[0] != 'O' || buffer[1] != 'K') {
+			//error - not ok
+			std::cout << "Not OK: " << (buffer[0] == 'O') << " " << (buffer[1] == 'K') << std::endl;
+			return -1;
+		}
 		//3
 	}
 	std::cout << "Done sending encrypted message" << std::endl;
@@ -277,8 +294,13 @@ ssize_t cread(int fd, void *buf, size_t len) {
 		
 		if(!charArrayEquals(checksum, mac, PACKET_CHECKSUM_LENGTH)) {
 			//checksum != mac
+			n = write(fd, "NO", 2);
 			std::cout << "Invalid checksum" << std::endl;
 			delete[] mac;
+			return -1;
+		}
+		n = write(fd, "OK", 2);
+		if (n < 0) {
 			return -1;
 		}
 		
