@@ -14,6 +14,10 @@
 #include <stdint.h>
 #include <sstream>
 #include <iomanip>
+#include "crypto.h"
+
+#define write cwrite
+#define read cread
 
 #include "serverCommands.cpp"
 
@@ -224,8 +228,6 @@ void* socketThread(void* args) {
     bzero(sendBuffer,256);
 
     n = read(sock,buffer,255);
-    // buffer[n-1] = '\0';
-    // printf("Here is the message: %s\n",buffer);
 
     if (n < 0) error("ERROR writing to socket");
     if (n == 0) {

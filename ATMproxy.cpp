@@ -17,7 +17,8 @@
 #include <errno.h>
 #include <iostream>
 
-void* client_thread(void* arg);
+void* to_client_thread(void* arg);
+void* to_server_thread(void* arg);
 int bankSocket; //Global FDs for network sockets
 int atmSocket;
 unsigned short bankPortNo;
@@ -98,15 +99,13 @@ int main(int argc, char* argv[]) {
 		t.thread_id = thread_id++;
 
 		pthread_t thread;
-		pthread_create(&thread, NULL, client_thread, &t);
+		pthread_create(&thread, NULL, to_client_thread, &t);
+		t.thread_id = thread_id++;
+		pthread_create(&thread, NULL, to_server_thread, &t);
 	}
 }
 
-/*
-  Create a client thread on new socket connection
-*/
-
-void* client_thread(void* arg) {
+void* to_server_thread(void* arg) {
 	struct thread_info *tinfo;
 	tinfo = (thread_info *) arg;
 	int csock = tinfo->arg;
@@ -149,6 +148,7 @@ void* client_thread(void* arg) {
 
 	  bzero(buffer,256);
 	  n = read(csock,buffer,255);
+	  std::cout << "Client: " << buffer << std::endl;
 	  if (n < 0) error("ERROR reading from socket");
 
     /*
@@ -157,14 +157,96 @@ void* client_thread(void* arg) {
     */
 		std::cout << buffer << std::endl;
 
-
-		n = write(bankSocket,buffer,255);
+		
+		n = write(bankSocket,buffer,n);
 		if (n < 0) error("ERROR writing to socket");
 
 
 		bzero(buffer,256);
-	  n = read(bankSocket,buffer,255);
-	  if (n < 0) error("ERROR reading from socket");
+		//n = read(bankSocket,buffer,255);
+		//std::cout << "Server: " << buffer << std::endl;
+		//if (n < 0) error("ERROR reading from socket");
+
+		/*
+      Other Team may mess with code here.
+      Good Luck!
+    */
+
+		//n = write(csock,buffer,n);
+		//if (n < 0) error("ERROR writing to socket");
+
+	}
+
+	printf("Disconected from client %d \n", csock);
+
+	close(bankSocket);
+	close(csock);
+	return NULL;
+}
+
+/*
+  Create a client thread on new socket connection
+*/
+
+void* to_client_thread(void* arg) {
+	struct thread_info *tinfo;
+	tinfo = (thread_info *) arg;
+	int csock = tinfo->arg;
+
+	printf("[proxy] client ID #%d connected\n", csock);
+
+	// New socket to connect to the bank
+	bankSocket = socket(AF_INET, SOCK_STREAM, 0);
+
+	if(bankSocket == -1) {
+    printf("Socket Not Created\n");
+		return NULL;
+	}
+
+	sockaddr_in addr_b;
+	addr_b.sin_family = AF_INET;
+	addr_b.sin_port = htons(bankPortNo);
+  addr_b.sin_addr.s_addr = INADDR_ANY;
+
+	if(0 != connect(bankSocket, reinterpret_cast<sockaddr*>(&addr_b), sizeof(addr_b))) {
+		printf("fail to connect to bank\n");
+		return NULL;
+	}
+
+	//input loop
+	unsigned int length;
+	char packet[1024];
+	while(1) {
+		//read the packet from the ATM
+    // ssize_t recv(int sockfd, void *buf, size_t len, int flags);
+    /*
+    s [in] The descriptor that identifies a connected socket.
+    buf [out] A pointer to the buffer to receive the incoming data.
+    len [in] The length, in bytes, of the buffer pointed to by the buf parameter.
+    flags [in] A set of flags that influences the behavior of this function.
+    */
+
+	  int n;
+	  char buffer[256];
+
+	  //bzero(buffer,256);
+	  //n = read(csock,buffer,255);
+	  //std::cout << "Client: " << buffer << std::endl;
+	  //if (n < 0) error("ERROR reading from socket");
+
+    /*
+      Other Team may mess with code here.
+      Good Luck!
+    */
+
+		
+		//n = write(bankSocket,buffer,n);
+		//if (n < 0) error("ERROR writing to socket");
+
+		bzero(buffer,256);
+		n = read(bankSocket,buffer,255);
+		std::cout << "Server: " << buffer << std::endl;
+		if (n < 0) error("ERROR reading from socket");
 
 		/*
       Other Team may mess with code here.
@@ -172,7 +254,7 @@ void* client_thread(void* arg) {
     */
 		std::cout << buffer << std::endl;
 
-		n = write(csock,buffer,255);
+		n = write(csock,buffer,n);
 		if (n < 0) error("ERROR writing to socket");
 
 	}

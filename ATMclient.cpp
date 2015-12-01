@@ -10,6 +10,10 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h>
+#include "crypto.h"
+
+#define write cwrite
+#define read cread
 #include "clientCommands.cpp"
 
 void closeSocket(int atmSocket) {

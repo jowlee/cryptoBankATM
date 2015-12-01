@@ -2,6 +2,11 @@
 #include <fstream>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include "crypto.h"
+
+#define write cwrite
+#define read cread
+
 
 void error(const char *msg){
     perror(msg);
