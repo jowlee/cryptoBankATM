@@ -63,24 +63,12 @@ int main(int argc, char *argv[]){
     std::cout << command << std::endl;
 
 
-    // Wait for user to input command
-    // int n = write(atmSocket, "123123", 16);
-    //
-    // char buffer[256];
-    // bzero(buffer,256);
-    // printf("Here is the message: %s\n",buffer);
-
-    // n = read(sock,buffer,255);
-    // if (n < 0) error("ERROR reading from socket");
-    std::cout << "compare exit: " << command.compare("exit") << std::endl;
-    std::cout << strlen(command.c_str()) << std::endl;
 
     if(command == "exit"){
       closeSocket(atmSocket);
-
     }
 
-    if(loggedin){
+    if(!loggedin){
       // Login in
       if(command.compare("balance") == 0){
         advanceSpaces(input, index);
@@ -116,9 +104,7 @@ int main(int argc, char *argv[]){
     }
 
     else{
-      std::cout << "Not Logged In" << std::endl;
       // Login in
-      std::cout << "compare login: " << command.compare("login") << std::endl;
       if(command.compare("login") == 0){
         advanceSpaces(input, index);
         std::string username = advanceCommand(input, index);
