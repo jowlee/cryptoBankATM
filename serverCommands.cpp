@@ -14,6 +14,7 @@ class userInfo {
       balance = b;
       loggedIn = false;
     }
+    userInfo() {}
     std::string getName() {return name;}
     bool hasName(std::string name) {
       if (this->name.compare(name) == 0) {
@@ -21,11 +22,10 @@ class userInfo {
       }
       return false;
     }
-    bool hasPin(std::string pin) {
-      if (this->pin.compare(pin) == 0) {
-        return true;
-      }
-      return false;
+    std::string getBalance() {
+      std::stringstream ss;
+      ss << balance;
+      return ss.str();
     }
     bool isLoggedIn() {
       return loggedIn;
@@ -38,6 +38,7 @@ class userInfo {
       }
       return false;
     }
+    
 };
 
 class userDB {
@@ -48,14 +49,26 @@ class userDB {
     void addUser(userInfo user) {
       users.push_back(user);
     }
-    bool loginUser(std::string name, std::string pin) {
+    userInfo* findUser(std::string name) {
       for (int i = 0; i < users.size(); i++) {
-        userInfo user = users[i];
-        if (user.hasName(name)) {
-          return user.Login(pin);
+        userInfo *user = new userInfo();
+         *user = users[i];
+        if (user->hasName(name)) {
+          return user;
         }
       }
-      return false;
+
+    }
+    bool loginUser(std::string name, std::string pin) {
+      userInfo *user = this->findUser(name);
+      return user->Login(pin);
+      // // for (int i = 0; i < users.size(); i++) {
+      // //   userInfo user = users[i];
+      // //   if (user.hasName(name)) {
+      // //     return user.Login(pin);
+      // //   }
+      // // }
+      // return false;
     }
 };
 void init_bank(userDB* users) {
