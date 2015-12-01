@@ -30,6 +30,38 @@ void advanceSpaces(const std::string &line, int &index) {
   for(; line[index] == ' ' && index <= line.length(); index++);
 }
 
+
+
+std::string login(const std::string username, int socketNo){
+
+  std::string cardInfo;
+
+  char cardName[80];
+  strcpy (cardName,username.c_str());
+  strcat(cardName, ".card");
+
+  std::ifstream inFile( cardName);
+  std::cout << "Opening " << cardName << std::endl;
+
+  std::string str;
+  if(! inFile){
+    std::cout << "Broken... Couldn't open file" << std::endl;
+  }
+
+  if(!std::getline(inFile, str)){
+    std::cout << "Broken..." << std::endl;
+  }
+
+  std::string password;
+
+  std::cout << "Password : ";
+  std::cin >> password;
+  std::cout << password << std::endl;
+
+  if(!validPin(password)){
+    std::cout << "Error Incorrect Password" << std::endl;
+  }
+
   // std::string message = "login " + username + " " + password;
   // std::cout << password.c_str() << std::endl;
   char message[256];
