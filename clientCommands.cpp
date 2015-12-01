@@ -3,6 +3,11 @@
 #include <sstream>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include "crypto.h"
+
+#define write cwrite
+#define read cread
+
 
 
 void closeSocket(int atmSocket) {

@@ -5,3 +5,6 @@ http://www.linuxhowtos.org/C_C++/socket.htm
 
 Threads:
 http://www.tutorialspoint.com/cplusplus/cpp_multithreading.htm
+
+Command to generate otp.key:
+head -c 1G </dev/urandom >otp.key

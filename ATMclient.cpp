@@ -11,6 +11,10 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h>
+#include "crypto.h"
+
+#define write cwrite
+#define read cread
 #include "clientCommands.cpp"
 
 int main(int argc, char *argv[]){
@@ -96,7 +100,7 @@ int main(int argc, char *argv[]){
 
       else if(command.compare("logout") == 0){
         advanceSpaces(input, index);
-				loggedin = false;
+        loggedin = false;
         sessionKey = "";
 
 				bzero(buffer,256);
