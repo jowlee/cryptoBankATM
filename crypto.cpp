@@ -263,7 +263,8 @@ char* sha_256(char* buf) {
 	return &sha256(buf)[0];
 }
 
-//For testing
+//For testing     
+/*
 int main(int argc, char *argv[]){
 	srand (time(NULL));
 	unsigned long long* indexOfPad = new unsigned long long;
@@ -299,3 +300,4 @@ int main(int argc, char *argv[]){
 	delete nonce;
 	delete indexOfPad;
 }
+//*/
