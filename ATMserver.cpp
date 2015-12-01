@@ -118,6 +118,7 @@ void advanceSpaces(const std::string &line, int &index) {
 
 void *consoleThread(void *threadid) {
 	// Read in commands from cin
+  std::cout << ("bank ~ : ");
 	for(std::string line; getline(std::cin, line);) {
 
 		int index = 0;
@@ -138,6 +139,8 @@ void *consoleThread(void *threadid) {
 			// Execute balance command
 			balance(&username);
 		}
+    std::cout << ("bank ~ : ");
+
 	}
 	pthread_exit(NULL);		// Ends the thread
 }
@@ -145,20 +148,26 @@ std::string genSessionKey(std::string username) {
   int secret = rand() % 1000 + 1;
   std::stringstream ss;
   ss << std::setfill('0') << std::setw(4) << secret;
-  return username + ss.str();
+  return username + '_' + ss.str();
 }
 std::string parseCommands(char buffer[], userDB* users, std::string& sessionKey) {
   int index = 0;
   std::string input(buffer);
-  std::string command = advanceCommand(input, index);
   std::string sendStr;
+  if (sessionKey.length() != 0) {
+    int pos = sessionKey.find('_');
+    std::string someUser = sessionKey.substr(0, pos);
+    std::cout << someUser << std::endl;
+  }
+
+  std::string command = advanceCommand(input, index);
   advanceSpaces(input, index);
   if (command.compare("login") == 0) {
     std::string username = advanceCommand(input, index);
     advanceSpaces(input, index);
     std::string pin = advanceCommand(input, index);
     if (users->loginUser(username, pin)) {
-      std::cout << "logged in!" << std::endl;
+      std::cout << username << " logged in!" << std::endl;
       sessionKey = genSessionKey(username);
       sendStr = "y " + sessionKey;
     } else {
@@ -172,6 +181,8 @@ std::string parseCommands(char buffer[], userDB* users, std::string& sessionKey)
 
   } else if (command.compare("logout") == 0) {
 
+  } else if (command.compare("init") == 0) {
+    sendStr = "connected to bank";
   } else {
     std::cout << "error! bad command!" << std::endl;
   }
@@ -179,6 +190,8 @@ std::string parseCommands(char buffer[], userDB* users, std::string& sessionKey)
 }
 
 void* socketThread(void* args) {
+  std::cout << std::endl;
+  // std::cout << "atm connection ~ : " << "connection made" << std::endl;
   struct thread_info *tinfo;
   tinfo = (thread_info *) args;
   int sock = tinfo->sock;
@@ -200,11 +213,13 @@ void* socketThread(void* args) {
 
     if (n < 0) error("ERROR writing to socket");
     if (buffer == "exit" || n == 0) {
-      std::cout << "exiting!" << std::endl;
+      std::cout << "atm connection ~ : " <<  "exiting!" << std::endl;
 	    pthread_exit(NULL);		// Ends the thread
       break;
     }
 
+    std::cout << "atm connection ~ : ";
+    std::cout << buffer << std::endl;
     std::string send = parseCommands(buffer, users, sessionKey);
     n = write(sock, send.c_str(), send.length());
   }
