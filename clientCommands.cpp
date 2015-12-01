@@ -15,6 +15,14 @@ bool validPin(std::string pin){
   return false;
 }
 
+bool checkGood(std::string response){
+  if(response.compare("error! bad command!") == 0){
+    std::cout << "didn't work" << std::endl;
+    return false;
+  }
+  else return true;
+}
+
 // Read input until we read a space, then for each character add it to the command string
 std::string advanceCommand(const std::string& line, int &index) {
   std::string command = "";
@@ -76,8 +84,6 @@ std::string login(const std::string username, int socketNo){
   int index = 0;
   std::string works = advanceCommand(response, index);
 
-  std::cout << response << " " << works << std::endl;
-
   if(works.compare("y") == 0){
     advanceSpaces(response, index);
     std::string code = advanceCommand(response, index);
@@ -103,28 +109,37 @@ void balance(const std::string sessionKey, int socketNo){
   bzero(buffer,256);
   n = read(socketNo,buffer,255);
   if (n < 0) error("ERROR reading from socket");
+  if(checkGood(std::string(buffer))){
+    return;
+  }
   std::cout << "balance is " << buffer << std::endl;
 }
 
 void withdraw(const std::string sessionKey, std::string amount, int socketNo){
 
   // Check balance for sufficient funds
-  int n = write(socketNo, "balance", 16);
+  char message[256];
+  strcpy (message, sessionKey.c_str());
+  strcat(message, " balance");
+  int n = write(socketNo, message, strlen(message)+1);
   if (n < 0) error("ERROR writing to socket");
 
   char buffer[256];
   bzero(buffer,256);
   n = read(socketNo,buffer,255);
   if (n < 0) error("ERROR reading from socket");
-  std:: cout << "balance is " << buffer << std::endl;
+  if(checkGood(std::string(buffer))){
+    return;
+  }
 
   float balance = atof(buffer);
   float amountf = atof(amount.c_str());
 
   // If sufficient funds, allow withdraw
   if(amountf < balance){
-    char message[256];
-    strcpy (message,"withdraw ");
+    bzero(message,256);
+    strcpy (message, sessionKey.c_str());
+    strcat (message," withdraw ");
     strcat(message, amount.c_str());
 
     int n = write(socketNo, message, 16);
@@ -133,7 +148,13 @@ void withdraw(const std::string sessionKey, std::string amount, int socketNo){
     bzero(buffer,256);
     n = read(socketNo,buffer,255);
     if (n < 0) error("ERROR reading from socket");
+    if(checkGood(std::string(buffer))){
+      return;
+    }
     std:: cout << buffer << std::endl;
+  }
+  else{
+    std::cout << "Insufficient funds to transfer" << buffer << std::endl;
   }
 
 }
@@ -141,13 +162,20 @@ void withdraw(const std::string sessionKey, std::string amount, int socketNo){
 void transfer(const std::string sessionKey, std::string amount, std::string username, int socketNo){
 
   // Check balance for sufficient funds
-  int n = write(socketNo, "balance", 16);
+  // Check balance for sufficient funds
+  char message[256];
+  strcpy (message, sessionKey.c_str());
+  strcat(message, " balance");
+  int n = write(socketNo, message, strlen(message)+1);
   if (n < 0) error("ERROR writing to socket");
 
   char buffer[256];
   bzero(buffer,256);
   n = read(socketNo,buffer,255);
   if (n < 0) error("ERROR reading from socket");
+  if(checkGood(std::string(buffer))){
+    return;
+  }
   std:: cout << "balance is " << buffer << std::endl;
 
   float balance = atof(buffer);
@@ -158,8 +186,9 @@ void transfer(const std::string sessionKey, std::string amount, std::string user
 
     // Check if other user exitss
     bzero(buffer,256);
-    strcpy (buffer,"withdraw ");
-    strcat(buffer, amount.c_str());
+    strcpy (buffer, sessionKey.c_str());
+    strcat (buffer," check ");
+    strcat(buffer, username.c_str());
     int n = write(socketNo, buffer, 16);
     if (n < 0) error("ERROR writing to socket");
 
@@ -167,6 +196,9 @@ void transfer(const std::string sessionKey, std::string amount, std::string user
     bzero(buffer,256);
     n = read(socketNo,buffer,255);
     if (n < 0) error("ERROR reading from socket");
+    if(checkGood(std::string(buffer))){
+      return;
+    }
     std:: cout << "Response is  " << buffer << std::endl;
 
     if(true){
@@ -183,8 +215,18 @@ void transfer(const std::string sessionKey, std::string amount, std::string user
       bzero(buffer,256);
       n = read(socketNo,buffer,255);
       if (n < 0) error("ERROR reading from socket");
+      if(checkGood(std::string(buffer))){
+        return;
+      }
       std:: cout << buffer << std::endl;
     }
+    else{
+      std:: cout << "The other user does not exist" << std::endl;
+    }
+  }
+
+  else{
+    std::cout << "Insufficient funds to transfer" << buffer << std::endl;
   }
 
 }
