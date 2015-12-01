@@ -116,34 +116,6 @@ void advanceSpaces(const std::string &line, int &index) {
   for(; line[index] == ' ' && index < line.length(); index++);
 }
 
-void *consoleThread(void *threadid) {
-	// Read in commands from cin
-  std::cout << ("bank ~ : ");
-	for(std::string line; getline(std::cin, line);) {
-
-		int index = 0;
-		std::string command = advanceCommand(line, index);
-    advanceSpaces(line, index);
-		std::string username = advanceCommand(line, index);
-
-		//deposit ​[username] [amount] ­ Increase <username>’s ​balance by <amount>
-		if(command.compare("deposit") == 0) {
-      advanceSpaces(line, index);
-			std::string amount = advanceCommand(line, index);
-
-			// Execute deposit command
-			// deposit(username, amount);
-		}
-		//balance​ [username] ­ Print the balance of <username>
-		else if(command.compare("balance") == 0) {
-			// Execute balance command
-			balance(&username);
-		}
-    std::cout << ("bank ~ : ");
-
-	}
-	pthread_exit(NULL);		// Ends the thread
-}
 std::string genSessionKey(std::string username) {
   int secret = rand() % 1000 + 1;
   std::stringstream ss;
@@ -197,12 +169,8 @@ std::string parseCommands(char buffer[], userDB* users, std::string& sessionKey)
     advanceSpaces(input, index);
     std::string sendingTo = advanceCommand(input, index);
     advanceSpaces(input, index);
-    std::cout << "transFRAT" << std::endl;
     users->transfer(thisUser->getName(), sendingTo, amount);
     sendStr = "transfered";
-  }
-  else if (command.compare("logout") == 0 && loggedIn) {
-
   }
   else if (command.compare("check") == 0 && loggedIn) {
     std::string name = advanceCommand(input, index);
@@ -243,9 +211,8 @@ void* socketThread(void* args) {
     // printf("Here is the message: %s\n",buffer);
 
     if (n < 0) error("ERROR writing to socket");
-    if (buffer == "exit" || n == 0) {
-      std::cout << "atm connection ~ : " <<  "exiting!" << std::endl;
-	    pthread_exit(NULL);		// Ends the thread
+    if (buffer == "logout" || n == 0) {
+      std::cout << "atm connection ~ : " <<  "user logged out!" << std::endl;
       break;
     }
 
@@ -254,5 +221,42 @@ void* socketThread(void* args) {
     std::string send = parseCommands(buffer, users, sessionKey);
     n = write(sock, send.c_str(), send.length());
   }
+  pthread_exit(NULL);		// Ends the thread
   return NULL;
+}
+
+void *consoleThread(void *args) {
+	// Read in commands from cin
+  struct thread_info *tinfo;
+  tinfo = (thread_info *) args;
+  userDB *users = tinfo->users;
+  std::string sendStr;
+
+  std::cout << ("bank ~ : ");
+	for(std::string line; getline(std::cin, line);) {
+
+		int index = 0;
+		std::string command = advanceCommand(line, index);
+    advanceSpaces(line, index);
+		std::string username = advanceCommand(line, index);
+
+		//deposit ​[username] [amount] ­ Increase <username>’s ​balance by <amount>
+		if(command.compare("deposit") == 0) {
+      advanceSpaces(line, index);
+			std::string amount = advanceCommand(line, index);
+
+			// Execute deposit command
+			sendStr = "deposited " + amount;
+      deposit(username, amount, users);
+		}
+		//balance​ [username] ­ Print the balance of <username>
+		else if(command.compare("balance") == 0) {
+			// Execute balance command
+			sendStr = balance(username, users);
+		}
+    std::cout << ("bank ~ : ");
+    std::cout << sendStr << std::endl;
+
+	}
+	pthread_exit(NULL);		// Ends the thread
 }

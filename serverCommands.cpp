@@ -3,8 +3,8 @@
 class userInfo;
 class userDB;
 
-void deposit(const std::string user, const std::string amount, userDB* users);
-void balance(const std::string* user);
+std::string deposit(const std::string user, const std::string amount, userDB* users);
+std::string balance(const std::string* user, userDB* users);
 
 void login(const std::string* user, int pin);
 void balance(const std::string* user);
@@ -107,12 +107,19 @@ void init_bank(userDB* users) {
 }
 
 
-void deposit(const std::string user, const std::string amount, userDB* users) {
-  std::cout << "dtest" << std::endl;
+std::string deposit(const std::string user, const std::string amount, userDB* users) {
+  userInfo *userVar;
+  userVar = users->findUser(user);
+  userVar->deposit(amount);
+  return userVar->getBalance();
+  // std::cout << "dtest" << std::endl;
+
 }
 
-void balance(const std::string* user) {
-  std::cout << "btest" << std::endl;
+std::string balance(const std::string user, userDB* users) {
+  userInfo *userVar;
+  userVar = users->findUser(user);
+  return userVar->getBalance();
 }
 
 void login(const std::string* user, int pin) {
