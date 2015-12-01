@@ -142,7 +142,7 @@ void withdraw(const std::string sessionKey, std::string amount, int socketNo){
     strcat (message," withdraw ");
     strcat(message, amount.c_str());
 
-    int n = write(socketNo, message, 16);
+    int n = write(socketNo, message, strlen(message)+1);
     if (n < 0) error("ERROR writing to socket");
 
     bzero(buffer,256);
@@ -188,7 +188,7 @@ void transfer(const std::string sessionKey, std::string amount, std::string user
     strcpy (buffer, sessionKey.c_str());
     strcat (buffer," check ");
     strcat(buffer, username.c_str());
-    int n = write(socketNo, buffer, 16);
+    int n = write(socketNo, buffer, strlen(buffer)+1);
     if (n < 0) error("ERROR writing to socket");
 
     bzero(buffer,256);
@@ -207,7 +207,7 @@ void transfer(const std::string sessionKey, std::string amount, std::string user
       strcat(message, " ");
       strcat(message, username.c_str());
 
-      int n = write(socketNo, message, 16);
+      int n = write(socketNo, message, strlen(message)+1);
       if (n < 0) error("ERROR writing to socket");
 
       bzero(buffer,256);
