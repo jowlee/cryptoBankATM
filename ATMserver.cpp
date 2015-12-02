@@ -296,9 +296,18 @@ void *consoleThread(void *args) {
 		else if(command.compare("deposit") == 0) {
 		  //deposit ​[username] [amount] ­ Increase <username>’s ​balance by <amount>
 			std::string amount = advanceCommand(line, index);
-      // std::string test = "test";
-      int isNum = atoi(amount.c_str());
-      if (isNum < 0) {
+      int testNeg = atoi(amount.c_str());
+      bool isInt = true;
+      for (int i = 0; i < amount.length(); i++) {
+        if (!(amount[i] >= '0' && amount[i] <= '9')) {
+          isInt = false;
+          // std::cout << test[i] << " not a int!" << std::endl;
+        }
+      }
+      if (!isInt) {
+        sendStr = amount + " is not a number!!!";
+      }
+      else if (testNeg < 0) {
         sendStr = "no negative deposits!!!";
       } else {
 			  sendStr = "deposited " + amount;
