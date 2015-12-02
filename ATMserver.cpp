@@ -107,7 +107,7 @@ int main(int argc, char *argv[]) {
 //
 void error(const char *msg) {
     std::cerr << msg <<std::endl;
-    exit(1);
+    // exit(1);
 }
 // Read input until we read a space, then for each character add it to the command string
 std::string advanceCommand(const std::string& line, int &index) {
@@ -219,6 +219,17 @@ std::string parseCommands(char buffer[], userDB* users, std::string& sessionKey,
   ss << sentNumber;
   return ss.str() + " " + sendStr;
 }
+void closeSocket(userDB* users, std::string sessionKey, int socket) {
+  if (sessionKey.length() != 0) {
+    int pos = sessionKey.find('_');
+    userInfo *thisUser;
+    std::string someUser = sessionKey.substr(0, pos);
+    thisUser = users->findUser(someUser);
+    thisUser->logout();
+  }
+  std::cout << "atm connection ~ : " <<  "socket# " << socket << " disconnected" << std::endl;
+  close(socket);
+}
 
 void* socketThread(void* args) {
   std::cout << std::endl;
@@ -240,29 +251,28 @@ void* socketThread(void* args) {
 
     n = read(sock,buffer,255);
 
-    if (n < 0) error("ERROR writing to socket");
-    if (n == 0) {
-      std::cout << "atm connection ~ : " <<  "socket# " << sock << " disconnected" << std::endl;
-      if (sessionKey.length() != 0) {
-        int pos = sessionKey.find('_');
-        userInfo *thisUser;
-        std::string someUser = sessionKey.substr(0, pos);
-        thisUser = users->findUser(someUser);
-        thisUser->logout();
-      }
+    if (n < 0) {
+      error("ERROR writing to socket");
+      closeSocket(users, sessionKey, sock);
       break;
     }
-    if (std::string(buffer).compare("init") == 0) {
+    if (n == 0) {
+      closeSocket(users, sessionKey, sock);
+      break;
+    }
+    if (std::string(buffer).compare("1 init") == 0) {
       std::cout << "atm connection ~ : ";
       std::cout << "socket# " << sock << " connected" << std::endl;
     } else {
+      #ifdef _debug
       std::cout << "atm connection ~ : ";
       std::cout << buffer << std::endl;
+      #endif
     }
     std::string send = parseCommands(buffer, users, sessionKey, sentNumber);
     n = write(sock, send.c_str(), send.length());
     if (send.compare("not the message I was expecting") == 0) {
-      close(sock);
+      closeSocket(users, sessionKey, sock);
       break;
     }
   }
@@ -292,9 +302,23 @@ void *consoleThread(void *args) {
 		else if(command.compare("deposit") == 0) {
 		  //deposit ​[username] [amount] ­ Increase <username>’s ​balance by <amount>
 			std::string amount = advanceCommand(line, index);
-
-			sendStr = "deposited " + amount;
-      deposit(username, amount, users);
+      int testNeg = atoi(amount.c_str());
+      bool isInt = true;
+      for (int i = 0; i < amount.length(); i++) {
+        if (!(amount[i] >= '0' && amount[i] <= '9')) {
+          isInt = false;
+          // std::cout << test[i] << " not a int!" << std::endl;
+        }
+      }
+      if (!isInt) {
+        sendStr = amount + " is not a number!!!";
+      }
+      else if (testNeg < 0) {
+        sendStr = "no negative deposits!!!";
+      } else {
+			  sendStr = "deposited " + amount;
+        deposit(username, amount, users);
+      }
 		}
 		else if(command.compare("balance") == 0) {
 		  //balance​ [username] ­ Print the balance of <username>

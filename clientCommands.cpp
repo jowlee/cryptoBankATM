@@ -3,6 +3,9 @@
 #include <sstream>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <ctype.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include "crypto.h"
 
 #define write cwrite
@@ -40,6 +43,20 @@ bool checkGood(std::string response){
   }
   else return false;
 }
+
+
+bool isNumber(std::string input){
+	// std::string input(word);
+
+	for(int i=0; i < input.length(); i++){
+		if(!(input[i] >= '0' && input[i] <= '9')){
+			return false;
+		}
+	}
+
+	return true;
+}
+
 
 // Read input until we read a space, then for each character add it to the command string
 std::string advanceCommand(const std::string& line, int &index) {
@@ -116,11 +133,13 @@ int login(const std::string username, int socketNo, int messageNumber, char *ans
   std::string str;
   if(! inFile){
     std::cout << "Broken... Couldn't open file" << std::endl;
+		strcpy (ans, "broken");
     return messageNumber;
   }
 
   if(!std::getline(inFile, str)){
     std::cout << "Broken..." << std::endl;
+		strcpy (ans, "broken");
     return messageNumber;
   }
 
@@ -130,6 +149,7 @@ int login(const std::string username, int socketNo, int messageNumber, char *ans
 
   if(!validPin(password)){
     std::cout << "Error Incorrect Password" << std::endl;
+		strcpy (ans, "broken");
     return messageNumber;
   }
 
@@ -143,6 +163,7 @@ int login(const std::string username, int socketNo, int messageNumber, char *ans
   char buffer[256];
   messageNumber = sendRecieve(socketNo, message, buffer, messageNumber);
   if(checkGood(std::string(buffer))){
+		strcpy (ans, "broken");
     return messageNumber;
   }
 
@@ -159,7 +180,7 @@ int login(const std::string username, int socketNo, int messageNumber, char *ans
   }
   else{
     std:: cout << "Didn't work .... sorry" << std::endl;
-    strcpy (ans, "broken");
+		strcpy (ans, "broken");
   }
   return messageNumber;
 }
@@ -192,6 +213,9 @@ int withdraw(const std::string sessionKey, std::string amount, int socketNo, int
   if(checkGood(std::string(buffer))){
     return messageNumber;
   }
+	if(!isNumber(amount)){
+		return messageNumber;
+	}
 
   float balance = atof(buffer);
   float amountf = atof(amount.c_str());
@@ -230,6 +254,10 @@ int transfer(const std::string sessionKey, std::string amount, std::string usern
   if(checkGood(std::string(buffer))){
     return messageNumber;
   }
+
+	if(!isNumber(amount)){
+		return messageNumber;
+	}
 
   float balance = atof(buffer);
   float amountf = atof(amount.c_str());
