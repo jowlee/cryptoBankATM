@@ -13,8 +13,8 @@
 #include <netdb.h>
 #include "crypto.h"
 
-// #define write cwrite
-// #define read cread
+#define write cwrite
+#define read cread
 #include "clientCommands.cpp"
 
 int main(int argc, char *argv[]){
@@ -125,7 +125,7 @@ int main(int argc, char *argv[]){
 				char ans[256];
 				messageNumber = login(username, atmSocket, messageNumber, ans);
 
-				if(ans != "broken"){
+				if((std::string(ans)).compare("broken") != 0){
 					sessionKey = ans;
 					loggedin = true;
 				}

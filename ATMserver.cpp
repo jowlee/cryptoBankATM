@@ -16,8 +16,8 @@
 #include <iomanip>
 #include "crypto.h"
 
-// #define write cwrite
-// #define read cread
+#define write cwrite
+#define read cread
 
 #include "serverCommands.cpp"
 

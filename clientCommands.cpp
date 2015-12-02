@@ -3,10 +3,13 @@
 #include <sstream>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <ctype.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include "crypto.h"
 
-// #define write cwrite
-// #define read cread
+#define write cwrite
+#define read cread
 
 
 
@@ -41,6 +44,20 @@ bool checkGood(std::string response){
   else return false;
 }
 
+
+bool isNumber(std::string input){
+	// std::string input(word);
+
+	for(int i=0; i < input.length(); i++){
+		if(!(input[i] >= '0' && input[i] <= '9')){
+			return false;
+		}
+	}
+
+	return true;
+}
+
+
 // Read input until we read a space, then for each character add it to the command string
 std::string advanceCommand(const std::string& line, int &index) {
   std::string command = "";
@@ -62,8 +79,6 @@ int parseRecieve(char * recieve, int messageNumber, int socketNo){
   advanceSpaces(recieve, messageIndex);
   int num = atoi(number.c_str());
 
-  std::cout << recieve << std::endl;
-
   if(num == -1){
     // Error dont read response
     bzero(recieve,256);
@@ -84,9 +99,6 @@ int parseRecieve(char * recieve, int messageNumber, int socketNo){
   bzero(recieve,256);
   strcpy (recieve,subConverted.c_str());
   messageNumber++;
-
-  std::cout << recieve << std::endl;
-
   return messageNumber;
 }
 
@@ -197,6 +209,9 @@ int withdraw(const std::string sessionKey, std::string amount, int socketNo, int
   if(checkGood(std::string(buffer))){
     return messageNumber;
   }
+	if(!isNumber(amount)){
+		return messageNumber;
+	}
 
   float balance = atof(buffer);
   float amountf = atof(amount.c_str());
@@ -236,6 +251,10 @@ int transfer(const std::string sessionKey, std::string amount, std::string usern
     return messageNumber;
   }
 
+	if(!isNumber(amount)){
+		return messageNumber;
+	}
+
   float balance = atof(buffer);
   float amountf = atof(amount.c_str());
 
@@ -254,8 +273,6 @@ int transfer(const std::string sessionKey, std::string amount, std::string usern
       return messageNumber;
     }
 
-    std:: cout << "Response is  " << buffer << std::endl;
-
     if((std::string(buffer)).compare("y") == 0){
       bzero(message,256);
       strcpy (message, sessionKey.c_str());
@@ -269,7 +286,6 @@ int transfer(const std::string sessionKey, std::string amount, std::string usern
       if(checkGood(std::string(buffer))){
         return messageNumber;
       }
-
       std:: cout << buffer << std::endl;
     }
     else{
