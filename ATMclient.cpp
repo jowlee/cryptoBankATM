@@ -56,12 +56,12 @@ int main(int argc, char *argv[]){
 	char buffer[256];
 	messageNumber = sendRecieve(atmSocket, message, buffer, messageNumber);
 
-  //input loop
-  bool loggedin = false;
+	//input loop
+	bool loggedin = false;
 	std::string sessionKey;
 	std::string input;
 
-	printf("atm ~ : ");
+	printf("ATM ~ : ");
 
   while(1){
 
@@ -132,7 +132,7 @@ int main(int argc, char *argv[]){
       }
     }
 
-		printf("atm ~ : ");
+		printf("ATM ~ : ");
 
   }
 
