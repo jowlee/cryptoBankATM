@@ -107,7 +107,7 @@ int main(int argc, char *argv[]) {
 //
 void error(const char *msg) {
     std::cerr << msg <<std::endl;
-    exit(1);
+    // exit(1);
 }
 // Read input until we read a space, then for each character add it to the command string
 std::string advanceCommand(const std::string& line, int &index) {
@@ -240,7 +240,11 @@ void* socketThread(void* args) {
 
     n = read(sock,buffer,255);
 
-    if (n < 0) error("ERROR writing to socket");
+    if (n < 0) {
+      error("ERROR writing to socket");
+      close(sock);
+      break;
+    }
     if (n == 0) {
       std::cout << "atm connection ~ : " <<  "socket# " << sock << " disconnected" << std::endl;
       if (sessionKey.length() != 0) {
@@ -292,9 +296,14 @@ void *consoleThread(void *args) {
 		else if(command.compare("deposit") == 0) {
 		  //deposit ​[username] [amount] ­ Increase <username>’s ​balance by <amount>
 			std::string amount = advanceCommand(line, index);
-
-			sendStr = "deposited " + amount;
-      deposit(username, amount, users);
+      // std::string test = "test";
+      int isNum = atoi(amount.c_str());
+      if (isNum < 0) {
+        sendStr = "no negative deposits!!!";
+      } else {
+			  sendStr = "deposited " + amount;
+        deposit(username, amount, users);
+      }
 		}
 		else if(command.compare("balance") == 0) {
 		  //balance​ [username] ­ Print the balance of <username>
