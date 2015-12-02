@@ -219,6 +219,17 @@ std::string parseCommands(char buffer[], userDB* users, std::string& sessionKey,
   ss << sentNumber;
   return ss.str() + " " + sendStr;
 }
+void closeSocket(userDB* users, std::string sessionKey, int socket) {
+  if (sessionKey.length() != 0) {
+    int pos = sessionKey.find('_');
+    userInfo *thisUser;
+    std::string someUser = sessionKey.substr(0, pos);
+    thisUser = users->findUser(someUser);
+    thisUser->logout();
+  }
+  std::cout << "atm connection ~ : " <<  "socket# " << socket << " disconnected" << std::endl;
+  close(socket);
+}
 
 void* socketThread(void* args) {
   std::cout << std::endl;
@@ -242,31 +253,26 @@ void* socketThread(void* args) {
 
     if (n < 0) {
       error("ERROR writing to socket");
-      close(sock);
+      closeSocket(users, sessionKey, sock);
       break;
     }
     if (n == 0) {
-      std::cout << "atm connection ~ : " <<  "socket# " << sock << " disconnected" << std::endl;
-      if (sessionKey.length() != 0) {
-        int pos = sessionKey.find('_');
-        userInfo *thisUser;
-        std::string someUser = sessionKey.substr(0, pos);
-        thisUser = users->findUser(someUser);
-        thisUser->logout();
-      }
+      closeSocket(users, sessionKey, sock);
       break;
     }
-    if (std::string(buffer).compare("init") == 0) {
+    if (std::string(buffer).compare("1 init") == 0) {
       std::cout << "atm connection ~ : ";
       std::cout << "socket# " << sock << " connected" << std::endl;
     } else {
+      #ifdef _debug
       std::cout << "atm connection ~ : ";
       std::cout << buffer << std::endl;
+      #endif
     }
     std::string send = parseCommands(buffer, users, sessionKey, sentNumber);
     n = write(sock, send.c_str(), send.length());
     if (send.compare("not the message I was expecting") == 0) {
-      close(sock);
+      closeSocket(users, sessionKey, sock);
       break;
     }
   }
