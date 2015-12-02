@@ -14,7 +14,7 @@
 #include "sha256.h"
 #include "crypto.h"
 
-const int PACKET_DATA_LENGTH = 32;    //bytes
+const int PACKET_DATA_LENGTH = 32;
 const int PACKET_CHECKSUM_LENGTH = 32;
 const int PACKET_LENGTH = PACKET_DATA_LENGTH + PACKET_CHECKSUM_LENGTH;
 
@@ -34,6 +34,7 @@ ssize_t cwrite(int fd, const void *buf, size_t len) {
 	#ifdef _DEBUG
 	std::cout << "Sending a message" << std::endl;
 	#endif
+	
 	//long indexOfPad = random integer from 0 to size of OTP in bytes
 	unsigned long long* indexOfPad = new unsigned long long;
 	*indexOfPad = unsignedLongLongRand();
@@ -87,8 +88,6 @@ ssize_t cwrite(int fd, const void *buf, size_t len) {
 	//2.2
 	//for(int bufferIndex = 0; bufferIndex < len; bufferIndex += PACKET_DATA_LENGTH) {
 	for(int bufferIndex = 0; bufferIndex < len; bufferIndex += PACKET_DATA_LENGTH) {
-		//char* toSend = buf[bufferIndex];
-		
 		char* toSend = new char[PACKET_DATA_LENGTH];
 		bzero(toSend, PACKET_DATA_LENGTH);
 		for(int i = 0; i < PACKET_DATA_LENGTH && bufferIndex + i < len; i++) {
@@ -389,10 +388,6 @@ ssize_t cread(int fd, void *buf, size_t len) {
 		#ifdef _DEBUG
 		std::cout << std::endl;
 		#endif
-		//memcpy(buf, message, PACKET_DATA_LENGTH);
-		//for(int i = 0; i < PACKET_DATA_LENGTH; i++) {
-		//	buf[i] = message[i];
-		//}
 		buf += PACKET_DATA_LENGTH;
 		
 	}
@@ -401,27 +396,15 @@ ssize_t cread(int fd, void *buf, size_t len) {
 
 char* OTP(char* output, unsigned long long* index, const unsigned long long amount) {
 	std::ifstream pad("otp.key", std::ifstream::ate | std::ifstream::binary);
-	//std::ifstream pad;
-	//pad.open("otp.key");
 	pad.seekg(0,std::ios::end);
 	pad.seekg(*index % pad.tellg());
-	//char* result = new char[amount];
 	pad.read(output, amount);
 	pad.close();
 	*index += amount;
 	return output;
-	//byte pad[amount];  allocate amount bytes to return
-	//seek to index in OTP
-	//for(long i = 0; i < amount; i++)
-		//pad[i] = readByte();  read in each byte from the file
-	//*index += amount;  increment index so we don't use the same pad twice
-	//return pad;
 }
 
 char* xorCharArray(char* output, const char* first, const char* second, unsigned long long size) {
-	//byte result[length];
-	//char* result = new char[length];
-	//for(long i = 0; i < length; i++) {
 	for(unsigned long long i = 0; i < size; i++) {
 		output[i] = first[i] ^ second[i];
 	}
@@ -437,7 +420,6 @@ unsigned long long unsignedLongLongRand() {
 }
 
 char* longToCharArray(char* output, unsigned long long num, unsigned long long size) {
-	//char* result = new char[size];
 	for(int i = 0; i < sizeof(unsigned long long); i++){
 		output[i] = num % (int)pow (2,(sizeof(char) * 8));
 		num /= (int)pow(2,(sizeof(char) * 8));
