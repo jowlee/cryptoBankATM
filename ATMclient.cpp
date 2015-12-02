@@ -125,7 +125,7 @@ int main(int argc, char *argv[]){
 				char ans[256];
 				messageNumber = login(username, atmSocket, messageNumber, ans);
 
-				if(ans != "broken"){
+				if((std::string(ans)).compare("broken") != 0){
 					sessionKey = ans;
 					loggedin = true;
 				}
