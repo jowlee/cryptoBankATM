@@ -133,11 +133,13 @@ int login(const std::string username, int socketNo, int messageNumber, char *ans
   std::string str;
   if(! inFile){
     std::cout << "Broken... Couldn't open file" << std::endl;
+		strcpy (ans, "broken");
     return messageNumber;
   }
 
   if(!std::getline(inFile, str)){
     std::cout << "Broken..." << std::endl;
+		strcpy (ans, "broken");
     return messageNumber;
   }
 
@@ -147,6 +149,7 @@ int login(const std::string username, int socketNo, int messageNumber, char *ans
 
   if(!validPin(password)){
     std::cout << "Error Incorrect Password" << std::endl;
+		strcpy (ans, "broken");
     return messageNumber;
   }
 
@@ -160,6 +163,7 @@ int login(const std::string username, int socketNo, int messageNumber, char *ans
   char buffer[256];
   messageNumber = sendRecieve(socketNo, message, buffer, messageNumber);
   if(checkGood(std::string(buffer))){
+		strcpy (ans, "broken");
     return messageNumber;
   }
 
@@ -176,7 +180,7 @@ int login(const std::string username, int socketNo, int messageNumber, char *ans
   }
   else{
     std:: cout << "Didn't work .... sorry" << std::endl;
-    strcpy (ans, "broken");
+		strcpy (ans, "broken");
   }
   return messageNumber;
 }
