@@ -18,6 +18,8 @@ const int PACKET_DATA_LENGTH = 32;    //bytes
 const int PACKET_CHECKSUM_LENGTH = 32;
 const int PACKET_LENGTH = PACKET_DATA_LENGTH + PACKET_CHECKSUM_LENGTH;
 
+ssize_t swrite(int fd, const void *buf, size_t count);
+ssize_t sread(int fd, void *buf, size_t count);
 char* OTP(unsigned long long* index, const unsigned long long amount);
 char* xorCharArray(const char* first, const char* second, unsigned long long length);
 unsigned long long unsignedLongLongRand();
@@ -25,7 +27,7 @@ char* longToCharArray(unsigned long long num, int size);
 unsigned long long charArrayToLong(const char* data, int size);
 bool charArrayEquals(const char* data1, const char* data2, int size);
 char* concat(const char* left, const char* right, int sizel, int sizer);
-char* sha_256(char* buf);
+char* sha_256(char* buf, int length);
 
 
 // send command
@@ -41,6 +43,7 @@ ssize_t cwrite(int fd, const void *buf, size_t len) {
 	char* nonce = longToCharArray(*indexOfPad, PACKET_LENGTH);
 	//send nonce to reciever
 	int n;
+	//n = swrite(fd, nonce, PACKET_LENGTH);
 	n = write(fd, nonce, PACKET_LENGTH);
 	delete nonce;
 	if (n < 0) {
@@ -107,7 +110,7 @@ ssize_t cwrite(int fd, const void *buf, size_t len) {
 		#endif
 		
 		//char* mac = sha-256(concat(toSend, key));
-		char* mac = sha_256(concat(toSend, key, PACKET_DATA_LENGTH, PACKET_CHECKSUM_LENGTH));
+		char* mac = sha_256(concat(toSend, key, PACKET_DATA_LENGTH, PACKET_CHECKSUM_LENGTH), PACKET_LENGTH);
 		delete[] key;
 		#ifdef _DEBUG
 		std::cout << "mac: ";
@@ -118,7 +121,7 @@ ssize_t cwrite(int fd, const void *buf, size_t len) {
 		//char* message = concat(toSend, mac);
 		char* message = concat(toSend, mac, PACKET_DATA_LENGTH, PACKET_CHECKSUM_LENGTH);
 		
-		//delete[] mac;
+		delete[] mac;
 		#ifdef _DEBUG
 		std::cout << "message: ";
 		for(int i = 0; i < PACKET_LENGTH; i++) std::cout << message[i];
@@ -187,6 +190,7 @@ ssize_t cread(int fd, void *buf, size_t len) {
 	//wait for nonce from sender
 	char buffer[PACKET_LENGTH];
 	int n;
+	//n = sread(fd, buffer, PACKET_LENGTH);
 	n = read(fd, buffer, PACKET_LENGTH);
 	if (n < 0) {
 		//error
@@ -340,7 +344,7 @@ ssize_t cread(int fd, void *buf, size_t len) {
 		std::cout << std::endl;
 		#endif
 
-		char* mac = sha_256(concat(message, key, PACKET_DATA_LENGTH, PACKET_CHECKSUM_LENGTH));
+		char* mac = sha_256(concat(message, key, PACKET_DATA_LENGTH, PACKET_CHECKSUM_LENGTH), PACKET_LENGTH);
 		
 		#ifdef _DEBUG
 		std::cout << "mac: ";
@@ -357,6 +361,7 @@ ssize_t cread(int fd, void *buf, size_t len) {
 			delete[] mac;
 			return -1;
 		}
+		delete[] mac;
 		n = write(fd, "OK", 2);
 		if (n < 0) {
 			return -1;
@@ -383,6 +388,174 @@ ssize_t cread(int fd, void *buf, size_t len) {
 		
 	}
 	return amount_recv;	
+}
+
+ssize_t swrite(int fd, const void *buf, size_t count) {
+	int amount = 50;
+	int amount_good = 20;
+	char* salt = "SALT";
+	int saltLength = 4;
+	char* data = new char[count];
+	int blocksize = count + PACKET_CHECKSUM_LENGTH;
+	for(int i = 0; i < count; i++) {
+		data[i] = ((char*)buf)[i];
+	}
+	char** block = new char*[amount];
+	
+	std::ifstream urandom("/dev/urandom", std::ifstream::in|std::ifstream::binary);
+	for(int i = 0; i < amount; i++) {
+		block[i] = new char[blocksize];
+		urandom.read(block[i], count);
+	}
+	
+	for(int i = 0; i < amount_good-1; i++) {
+		char* newData = xorCharArray(data, block[i], count);
+		//std::cout << "deleting data" << std::endl;
+		delete[] data;
+		data = newData;
+	}
+	block[amount_good-1] = data;
+	for(int i = 0; i < amount_good; i++) {
+		char* salted = concat(block[i], salt, count, saltLength);
+		char tmpsalted[count + saltLength + 1];
+		for(int j = 0; j < count + saltLength; j++) tmpsalted[j] = salted[j];
+		tmpsalted[count + saltLength] = '\0';
+		char* MAC = sha_256(tmpsalted, count + saltLength + 1);
+		char* tmpblock = concat(block[i], MAC, count, PACKET_CHECKSUM_LENGTH);
+		
+		#ifdef _DEBUG
+		std::cout << "salted: ";
+		for(int j = 0; j < count + saltLength; j++) std::cout << (unsigned int)(unsigned char)tmpsalted[j];
+		std::cout << std::endl;
+		#endif
+		
+		#ifdef _DEBUG
+		std::cout << "MAC: ";
+		for(int j = 0; j < PACKET_CHECKSUM_LENGTH; j++) std::cout << (unsigned int)(unsigned char)MAC[j];
+		std::cout << std::endl;
+		#endif
+		
+		#ifdef _DEBUG
+		std::cout << "making block: ";
+		for(int j = 0; j < blocksize; j++) std::cout << (unsigned int)(unsigned char)tmpblock[j];
+		std::cout << std::endl;
+		#endif
+		
+		delete[] MAC;
+		//std::cout << "deleting block[i]" << std::endl;
+		delete[] block[i];
+		//std::cout << "deleting salted" << std::endl;
+		delete salted;
+		block[i] = tmpblock;
+	}
+	for(int i = amount_good; i < amount; i++) {
+		char fakeMAC[PACKET_CHECKSUM_LENGTH];
+		urandom.read(fakeMAC, PACKET_CHECKSUM_LENGTH);
+		char* tmpblock = concat(block[i], fakeMAC, count, PACKET_CHECKSUM_LENGTH);
+		//std::cout << "deleting block[i] (2)" << std::endl;
+		delete[] block[i];
+		block[i] = tmpblock;
+	}
+	for(int i = 0; i < 1000; i++) {
+		int first = i % amount;
+		int second = rand() % amount;
+		char* tmp = block[first];
+		block[first] = block[second];
+		block[second] = tmp;
+	}
+	urandom.close();
+	//n = write(fd, (size_t)(count + PACKET_CHECKSUM_LENGTH), sizeof(size_t));
+	for(int i = 0; i < amount; i++) {
+		
+		//std::cout << "sending block: ";
+		//for(int j = 0; j < blocksize; j++) std::cout << block[i][j];
+		//std::cout << std::endl;
+		
+		int n = write(fd, block[i], blocksize);
+		//std::cout << "deleting block[i] (3)" << std::endl;
+		delete[] block[i];
+		if (n < 0) {
+			return -1;
+		}
+	}
+	//std::cout << "deleting block" << std::endl;
+	delete[] block;
+	return count;
+	//int n = write(fd, send.c_str(), send.length());
+    
+}
+ssize_t sread(int fd, void *buf, size_t count) {
+	int amount = 50;
+	int amount_good = 20;
+	char* salt = "SALT";
+	int saltLength = 4;
+	char* data = new char[count];
+	for(int i = 0; i < count; i++) {
+		data[i] = 0;
+	}
+	//char** block = new char[amount][count + PACKET_CHECKSUM_LENGTH];
+	static int blocksize = count + PACKET_CHECKSUM_LENGTH;
+	char** block = new char*[amount_good];
+	int block_index = 0;
+	for(int i = 0; i < amount; i++) {
+		char* tmpblock = new char[blocksize];
+		int n = read(fd, tmpblock, blocksize);
+		if (n < 0) {
+			return -1;
+		}
+		char* checksum = tmpblock + count;
+		
+		char* salted = concat(tmpblock, salt, count, saltLength);
+		char tmpsalted[count + saltLength + 1];
+		for(int j = 0; j < count + saltLength; j++) tmpsalted[j] = salted[j];
+		tmpsalted[count + saltLength] = '\0';
+		char* MAC = sha_256(tmpsalted, count + saltLength + 1);
+		#ifdef _DEBUG
+		std::cout << "making salted: ";
+		for(int j = 0; j < count + saltLength; j++) std::cout << (unsigned int)(unsigned char)tmpsalted[j];
+		std::cout << std::endl;
+		#endif
+		#ifdef _DEBUG
+		std::cout << "MAC     : ";
+		for(int j = 0; j < PACKET_CHECKSUM_LENGTH; j++) std::cout << (unsigned int)(unsigned char)MAC[j];
+		std::cout << std::endl;
+		//std::cout << "checksum: " << checksum << std::endl;
+		//std::cout << "MAC     : " << (char*)MAC << std::endl;
+		#endif
+		#ifdef _DEBUG
+		std::cout << "checksum: ";
+		for(int j = 0; j < PACKET_CHECKSUM_LENGTH; j++) std::cout << (unsigned int)(unsigned char)checksum[j];
+		std::cout << std::endl;
+		#endif
+		
+		//std::cout << "Delete MAC"<< std::endl;
+		
+		delete[] salted;
+		if(charArrayEquals(checksum, MAC, PACKET_CHECKSUM_LENGTH)) {
+			//std::cout << "Good Block: " << i << std::endl;
+			block[block_index++] = tmpblock;
+		}
+		//else {
+		//	std::cout << "Bad Block: " << i << std::endl;
+		//}
+		delete[] MAC;
+	}
+	for(int i = 0; i < amount_good; i++) {
+		char* tmp = xorCharArray(data, block[i], count);
+		//std::cout << "deleting block[i]" << std::endl;
+		delete[] block[i];
+		//std::cout << "deleting data" << std::endl;
+		delete[] data;
+		data = tmp;
+	}
+	//std::cout << "deleting block" << std::endl;
+	delete[] block;
+	for(int i = 0; i < count; i++) {
+		((char*)buf)[i] = data[i];
+	}
+	//std::cout << "deleting data" << std::endl;
+	delete[] data;
+	return count;
 }
 
 char* OTP(unsigned long long* index, const unsigned long long amount) {
@@ -442,6 +615,7 @@ unsigned long long charArrayToLong(const char* data, int size){
 bool charArrayEquals(const char* data1, const char* data2, int size) {
 	for(int i = 0; i < size; i++) {
 		if(data1[i] != data2[i]) return false;
+		
 	}
 	return true;
 }
@@ -457,8 +631,8 @@ char* concat(const char* left, const char* right, int sizel, int sizer) {
 	return result;
 }
 
-char* sha_256(char* buf) {
-	return &sha256(buf)[0];
+char* sha_256(char* buf, int length) {
+	return sha256(buf, length);
 }
 
 //For testing     
