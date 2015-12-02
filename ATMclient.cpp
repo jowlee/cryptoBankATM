@@ -4,6 +4,7 @@
 #include <string.h>
 #include <string>
 #include <iostream>
+#include <sstream>
 #include <cstring>
 #include <signal.h>
 #include <sys/types.h>
@@ -15,13 +16,6 @@
 #define write cwrite
 #define read cread
 #include "clientCommands.cpp"
-
-void closeSocket(int atmSocket) {
-	printf("Closing \n");
-	fflush(stdout);
-	close(atmSocket);
-	exit(1);
-}
 
 int main(int argc, char *argv[]){
 
@@ -56,17 +50,12 @@ int main(int argc, char *argv[]){
 
 	int messageNumber = 1;
 
-	// TODO: implement message number
-	// std::string number= std::to_string(messageNumber);
-	// messageNumber++;
+	char message[256];
+	strcpy(message,  "init");
 
-	char mess[256];
-	strcpy(mess, "init");
-	int n = write(atmSocket, mess, strlen(mess)+1);
-	if (n < 0) error("ERROR something is wrong");
-	char buf[256];
-	n = read(atmSocket,buf,255);
-  if (n < 0) error("ERROR reading from socket");
+	char buffer[256];
+	messageNumber = sendRecieve(atmSocket, message, buffer, messageNumber);
+
   //input loop
   bool loggedin = false;
 	std::string sessionKey;
@@ -77,10 +66,6 @@ int main(int argc, char *argv[]){
   while(1){
 
 		getline(std::cin, input);
-
-    // fgets(buf, 255, stdin);
-		// buf[strlen(buf)-1] = '\0';	//trim off trailing newline
-    // std::string input(buf);
     int index = 0;
 		if (input.length() == 0) continue;
     std::string command = advanceCommand(input, index);
@@ -94,14 +79,14 @@ int main(int argc, char *argv[]){
       if(command.compare("balance") == 0){
         advanceSpaces(input, index);
         std::cout << "Obtaining Balance..." << std::endl;
-        balance(sessionKey, atmSocket);
+        messageNumber = balance(sessionKey, atmSocket, messageNumber);
       }
 
       else if(command.compare("withdraw") == 0){
         advanceSpaces(input, index);
         std::string amountString = advanceCommand(input, index);
         float amount = atof(amountString.c_str());
-				withdraw(sessionKey, amountString, atmSocket);
+				messageNumber = withdraw(sessionKey, amountString, atmSocket, messageNumber);
       }
 
       else if(command.compare("transfer") == 0){
@@ -110,20 +95,25 @@ int main(int argc, char *argv[]){
         float amount = atof(amountString.c_str());
         advanceSpaces(input, index);
         std::string username = advanceCommand(input, index);
-				transfer(sessionKey, amountString, username, atmSocket);
+				messageNumber = transfer(sessionKey, amountString, username, atmSocket, messageNumber);
       }
 
       else if(command.compare("logout") == 0){
         advanceSpaces(input, index);
-				// closeSocket(atmSocket);
         loggedin = false;
         sessionKey = "";
-        int n = write(atmSocket, "logout", 6);
+
+				bzero(buffer,256);
+				bzero(message,256);
+
+				strcpy(message,  "logout");
+				messageNumber = sendRecieve(atmSocket, message, buffer, messageNumber);
+
         std::cout << "Logging Out..." << std::endl;
-        // exit(0);
+
       }
       else{
-        std::cout << "You suck man" << std::endl;
+        std::cout << "Command not found" << std::endl;
       }
     }
 
@@ -132,9 +122,10 @@ int main(int argc, char *argv[]){
       if(command.compare("login") == 0){
         advanceSpaces(input, index);
         std::string username = advanceCommand(input, index);
-        std::cout << username << std::endl;
-        std::string ans = login(username, atmSocket);
-				if(ans != "broken"){
+				char ans[256];
+				messageNumber = login(username, atmSocket, messageNumber, ans);
+
+				if((std::string(ans)).compare("broken") != 0){
 					sessionKey = ans;
 					loggedin = true;
 				}

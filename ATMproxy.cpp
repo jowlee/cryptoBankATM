@@ -26,6 +26,7 @@ unsigned short bankPortNo;
 struct thread_info {    		/* Used as argument to thread_start() */
 	pthread_t thread_id;     /* ID returned by pthread_create() */
 	int arg;
+	int bankSocket;
 };
 
 void closeSocket(int param) {
@@ -91,14 +92,17 @@ int main(int argc, char* argv[]) {
 		sockaddr_in unused;
 		socklen_t size = sizeof(unused);
 		int csock = accept(atmSocket, reinterpret_cast<sockaddr*>(&unused), &size);
+		int bankSocket = socket(AF_INET, SOCK_STREAM, 0);
 		if(csock < 0)	//bad client, skip it
 			continue;
 
 		thread_info t;
 		t.arg = csock;
+		t.bankSocket = bankSocket;
 		t.thread_id = thread_id++;
 
 		pthread_t thread;
+
 		pthread_create(&thread, NULL, to_client_thread, &t);
 		t.thread_id = thread_id++;
 		pthread_create(&thread, NULL, to_server_thread, &t);
@@ -113,7 +117,7 @@ void* to_server_thread(void* arg) {
 	printf("[proxy] client ID #%d connected\n", csock);
 
 	// New socket to connect to the bank
-	bankSocket = socket(AF_INET, SOCK_STREAM, 0);
+	int bankSocket = tinfo->bankSocket;
 
 	if(bankSocket == -1) {
     printf("Socket Not Created\n");
@@ -155,9 +159,7 @@ void* to_server_thread(void* arg) {
       Other Team may mess with code here.
       Good Luck!
     */
-		std::cout << buffer << std::endl;
 
-		
 		n = write(bankSocket,buffer,n);
 		if (n < 0) error("ERROR writing to socket");
 
@@ -192,11 +194,11 @@ void* to_client_thread(void* arg) {
 	struct thread_info *tinfo;
 	tinfo = (thread_info *) arg;
 	int csock = tinfo->arg;
-
 	printf("[proxy] client ID #%d connected\n", csock);
 
 	// New socket to connect to the bank
-	bankSocket = socket(AF_INET, SOCK_STREAM, 0);
+	// bankSocket = socket(AF_INET, SOCK_STREAM, 0);
+	int bankSocket = tinfo->bankSocket;
 
 	if(bankSocket == -1) {
     printf("Socket Not Created\n");
@@ -239,7 +241,7 @@ void* to_client_thread(void* arg) {
       Good Luck!
     */
 
-		
+
 		//n = write(bankSocket,buffer,n);
 		//if (n < 0) error("ERROR writing to socket");
 
@@ -252,8 +254,6 @@ void* to_client_thread(void* arg) {
       Other Team may mess with code here.
       Good Luck!
     */
-		std::cout << buffer << std::endl;
-
 		n = write(csock,buffer,n);
 		if (n < 0) error("ERROR writing to socket");
 
