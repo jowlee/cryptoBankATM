@@ -1,0 +1,32 @@
+Protocol 
+
+Our protocol uses a One-time pad to securely transfer information between the server and the clients.  
+The protocol is as follows:  
+1. The sender generates a unsigned long to be the starting index of the One-Time Pad (OTP)  
+2. The sender sends the index to the receiver  
+3. The sender reads PACKET_LENGTH bytes starting at the index from the OTP twice, increasing the index by PACKET_LENGTH each time and xors them together to use as a checksum  
+4.The receiver gets the index and reads PACKET_LENGTH bytes starting at the index from the OTP and increments the index by PACKET_LENGTH this is used as a message  
+5. The receiver reads another PACKET_LENGTH bytes from the OTP and increments the index by PACKET_LENGTH this is used as the pad  
+6. The receiver xors the message and the pad together and sends it back to the sender  
+7. The sender gets the digest from the receiver and compares it to their checksum  
+  1. If the checksums do not match send “NO” to the receiver and return -1   
+8. The receiver waits for an “OK”, otherwise returns -1  
+9. While there is more data to send loop:  
+  1. The sender reads in PACKET_DATA_LENGTH bytes from the buffer, call this the data  
+  2. The sender reads PACKET_LENGTH bytes starting at the index from the OTP, increments the index by PACKET_LENGTH, call this the key  
+  3. The sender concatenates the data and key and gets the hash of it, call this MAC  
+  4. The sender concatenates the data and MAC, call this the message  
+  5. The sender reads in PACKET_LENGTH bytes from the buffer, call this the pad  
+  6. The sender xors the message and the pad to get an encryption  
+  7. The sender sends the encryption to the receiver  
+  8. The receiver gets the encryption  
+  9. The receiver reads PACKET_LENGTH bytes starting at the index from the OTP, increments the index by PACKET_LENGTH, this the key  
+  10. The receiver reads PACKET_LENGTH bytes again starting at the index from the OTP,increments the index by PACKET_LENGTH , this the pad  
+  11. The receiver xors the encryption with the pad to obtain the message  
+  12. The receiver separates the first PACKET_DATA_LENGTH bytes, the data, from the second PACKET_CHECKSUM_LENGTH bytes, the checksum  
+  13. The receiver hashes the concatenation of the message and the key to obtain a MAC
+  14. The receiver compares the checksum with the MAC  
+    1. If they don’t match the receiver sends “NO” and returns -1    
+  16. The receiver adds the data to the buffer to send to the user     
+  17. The sender waits for an “OK”, otherwise returns -1     
+10. When there is no data left to send the sender sends “DONE” to the receiver  
